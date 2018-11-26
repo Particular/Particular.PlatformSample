@@ -5,6 +5,7 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\NServiceBus.snk</AssemblyOriginatorKeyFile>
     <Description>A package containing the Particular Service Platform for use in samples and tutorials</Description>
+    <RootNamespace>Particular</RootNamespace>
   </PropertyGroup>
 
 </Project>
