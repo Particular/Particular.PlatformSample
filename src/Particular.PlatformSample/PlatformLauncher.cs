@@ -2,21 +2,26 @@
 {
     using System;
     using System.IO;
-    using System.Linq;
 
     public static class PlatformLauncher
     {
+        const int PortStartSearch = 33533;
+
         public static void Launch() => Launch(Console.Out, Console.In);
 
-        public static void Launch(TextWriter output, TextReader input, int serviceControlPort = 33533, int serviceControlMaintenancePort = 33534)
+        public static void Launch(TextWriter output, TextReader input)
         {
-            output.WriteLine($"Checking if port '{serviceControlPort}' is available for ServiceControl");
-            var foundServiceControlPort = Network.FindAvailablePorts(serviceControlPort, 10).FirstOrDefault();
-            output.WriteLine($"Found port '{foundServiceControlPort}' available for ServiceControl");
+            var ports = Network.FindAvailablePorts(PortStartSearch, 4);
 
-            output.WriteLine($"Checking if maintenance port '{serviceControlMaintenancePort}' is available for ServiceControl");
-            var foundServiceControlMaintenancePort = Network.FindAvailablePorts(serviceControlMaintenancePort, 10).FirstOrDefault();
-            output.WriteLine($"Found maintenance port '{foundServiceControlMaintenancePort}' available for ServiceControl");
+            var controlPort = ports[0];
+            var maintenancePort = ports[1];
+            var monitoringPort = ports[2];
+            var pulsePort = ports[3];
+
+            output.WriteLine($"Found free port '{controlPort}' for ServiceControl");
+            output.WriteLine($"Found free port '{maintenancePort}' for ServiceControl Maintenance");
+            output.WriteLine($"Found free port '{monitoringPort}' for ServiceControl Monitoring");
+            output.WriteLine($"Found free port '{pulsePort}' for ServicePulse");
 
             var solutionFolder = Finder.FindSolutionRoot();
 
@@ -29,8 +34,19 @@
 
             using (var launcher = new AppLauncher())
             {
-                launcher.ServiceControl(foundServiceControlPort);
+                output.WriteLine("Launching ServiceControl");
+                launcher.ServiceControl(controlPort, maintenancePort);
 
+                output.WriteLine("Waiting for ServiceControl to be available...");
+                Network.WaitForHttpOk($"http://localhost:{controlPort}");
+
+                output.WriteLine("Launching ServiceControl Monitoring");
+                launcher.Monitoring(monitoringPort);
+
+                output.WriteLine("Launching ServicePulse");
+                launcher.ServicePulse(pulsePort);
+
+                output.WriteLine("Press Enter to stop Particular Service Platform tools.");
                 input.ReadLine();
             }
         }   

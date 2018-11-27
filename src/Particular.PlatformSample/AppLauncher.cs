@@ -11,7 +11,7 @@
         Process monitoring;
         Process pulse;
 
-        public void ServiceControl(int port)
+        public void ServiceControl(int port, int maintenancePort)
         {
             control = StartProcess(@"servicecontrol\servicecontrol-instance\bin\ServiceControl.exe");
         }
