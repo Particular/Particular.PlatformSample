@@ -6,6 +6,17 @@
     <AssemblyOriginatorKeyFile>..\NServiceBus.snk</AssemblyOriginatorKeyFile>
     <Description>A package containing the Particular Service Platform for use in samples and tutorials</Description>
     <RootNamespace>Particular</RootNamespace>
+    <NoWarn>$(NoWarn);NU5100</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Particular.Packaging" Version="0.2.0" PrivateAssets="all" />    
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="configs\" />
+    <None Remove="platform\**\*.*" />
+    <Content Include="platform\**\*.*" Pack="true" PackagePath="platform" />
+  </ItemGroup>
 
 </Project>

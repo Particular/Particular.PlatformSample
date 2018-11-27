@@ -4,7 +4,7 @@
     using System.IO;
     using System.Linq;
 
-    public static class Finder
+    static class Finder
     {
         public static string FindSolutionRoot()
         {

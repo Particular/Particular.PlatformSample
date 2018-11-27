@@ -3,12 +3,23 @@
     using System;
     using System.IO;
 
+    /// <summary>
+    /// stub
+    /// </summary>
     public static class PlatformLauncher
     {
         const int PortStartSearch = 33533;
 
+        /// <summary>
+        /// stub
+        /// </summary>
         public static void Launch() => Launch(Console.Out, Console.In);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="output"></param>
+        /// <param name="input"></param>
         public static void Launch(TextWriter output, TextReader input)
         {
             var ports = Network.FindAvailablePorts(PortStartSearch, 4);
@@ -24,6 +35,7 @@
             output.WriteLine($"Found free port '{pulsePort}' for ServicePulse");
 
             var solutionFolder = Finder.FindSolutionRoot();
+            output.WriteLine("Solution Folder: " + solutionFolder);
 
             output.WriteLine("Creating log folders");
             Directory.CreateDirectory(Path.Combine(solutionFolder, @".\.logs\monitoring"));
@@ -38,7 +50,7 @@
                 launcher.ServiceControl(controlPort, maintenancePort);
 
                 output.WriteLine("Waiting for ServiceControl to be available...");
-                Network.WaitForHttpOk($"http://localhost:{controlPort}");
+                //Network.WaitForHttpOk($"http://localhost:{controlPort}");
 
                 output.WriteLine("Launching ServiceControl Monitoring");
                 launcher.Monitoring(monitoringPort);
