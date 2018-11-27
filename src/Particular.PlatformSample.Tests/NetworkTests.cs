@@ -36,5 +36,4 @@
             Assert.IsTrue(results.All(p => p != knownTakenPort));
         }
     }
-
 }

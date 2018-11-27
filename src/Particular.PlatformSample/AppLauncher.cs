@@ -7,21 +7,21 @@
     class AppLauncher : IDisposable
     {
         const string platformPath = @".\platform";
-        static Process control;
-        static Process monitoring;
-        static Process pulse;
+        Process control;
+        Process monitoring;
+        Process pulse;
 
-        public static void ServiceControl(int port)
+        public void ServiceControl(int port)
         {
             control = StartProcess(@"servicecontrol\servicecontrol-instance\bin\ServiceControl.exe");
         }
 
-        public static void Monitoring(int port)
+        public void Monitoring(int port)
         {
             monitoring = StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe");
         }
 
-        public static void ServicePulse(int port)
+        public void ServicePulse(int port)
         {
             pulse = StartProcess(@"servicepulse\ServicePulse.Host.exe", $"--url=\"http://localhost:{port}\"");
         }
