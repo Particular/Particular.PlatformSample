@@ -28,7 +28,7 @@
 
         static Process StartProcess(string relativeExePath, string arguments = null)
         {
-            var fullExePath = Path.Combine(platformPath, relativeExePath);
+            var fullExePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, platformPath, relativeExePath);
             var workingDirectory = Path.GetDirectoryName(fullExePath);
 
             var startInfo = new ProcessStartInfo(fullExePath, arguments);

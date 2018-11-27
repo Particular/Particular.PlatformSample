@@ -64,7 +64,14 @@
                 }
                 catch (WebException wx)
                 {
-                    status = ((HttpWebResponse)wx.Response).StatusCode;
+                    if (wx.Response is HttpWebResponse response)
+                    {
+                        status = response.StatusCode;
+                    }
+                    else
+                    {
+                        status = HttpStatusCode.Ambiguous;
+                    }
                 }
             }
             while (status != HttpStatusCode.OK);
