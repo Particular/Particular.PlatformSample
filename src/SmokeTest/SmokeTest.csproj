@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net452;netcoreapp2.1</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Particular.PlatformSample\Particular.PlatformSample.csproj" />
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="xcopy /E /I /Y /Q &quot;$(SolutionDir)Particular.PlatformSample\platform&quot; &quot;$(TargetDir)platform&quot;" />
+  </Target>
+
+</Project>

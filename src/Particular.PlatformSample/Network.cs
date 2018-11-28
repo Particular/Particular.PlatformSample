@@ -74,8 +74,6 @@
                         status = HttpStatusCode.Ambiguous;
                     }
                 }
-
-                Console.WriteLine(status);
             }
             while (status != HttpStatusCode.OK);
         }
