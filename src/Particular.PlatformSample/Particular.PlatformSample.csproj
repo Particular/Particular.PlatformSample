@@ -14,9 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="configs\" />
     <None Remove="platform\**\*.*" />
     <Content Include="platform\**\*.*" Pack="true" PackagePath="platform" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="configs\*.*" />
   </ItemGroup>
 
 </Project>
