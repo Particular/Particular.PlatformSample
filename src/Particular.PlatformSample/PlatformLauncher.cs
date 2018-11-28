@@ -54,7 +54,6 @@
 
             output.WriteLine("Creating transport folder");
             var transportPath = finder.GetDirectory(@".\.learningtransport");
-            Directory.CreateDirectory(transportPath);
 
             using (var launcher = new AppLauncher())
             {
@@ -65,7 +64,8 @@
                 Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET");
 
                 output.WriteLine("Launching ServiceControl Monitoring");
-                launcher.Monitoring(monitoringPort, monitoringLogs, transportPath);
+                // Monitoring appends `.learningtransport` to the transport path on its own
+                launcher.Monitoring(monitoringPort, monitoringLogs, finder.SolutionRoot);
 
                 output.WriteLine("Launching ServicePulse");
                 launcher.ServicePulse(pulsePort, controlPort, monitoringPort);

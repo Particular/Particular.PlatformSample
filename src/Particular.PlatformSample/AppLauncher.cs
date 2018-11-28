@@ -59,11 +59,15 @@
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            //var url = $"http://localhost:{port}";
-            //var proc = StartProcess(@"servicepulse\ServicePulse.Host.exe", $"--url=\"{url}\"");
-            pulse = null;//new ProcessCloser(proc, ProcessCloser.CtrlC);
+            var webroot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicepulse");
+            var sp = new ServicePulse(port, webroot);
 
-            //Process.Start(url);
+            sp.Run();
+
+            pulse = new ProcessCloser(null, _ => sp.Stop());
+
+            var url = $"http://localhost:{port}";
+            Process.Start(url);
         }
 
         static Process StartProcess(string relativeExePath, string arguments = null)
