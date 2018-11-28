@@ -1,5 +1,6 @@
 ﻿namespace Particular
 {
+    using System;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Builder;
@@ -35,7 +36,12 @@
 
         public void Stop()
         {
+            Console.WriteLine("Shutting down ServicePulse");
             shutdown.Cancel();
+
+            Console.WriteLine("Shutting down ServicePulse - waiting for shutdown");
+            runHostTask.GetAwaiter().GetResult();
+            Console.WriteLine("Shutting down ServicePulse - complete");
         }
     }
 

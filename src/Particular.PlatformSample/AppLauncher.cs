@@ -77,10 +77,21 @@
 
             var startInfo = new ProcessStartInfo(fullExePath, arguments);
             startInfo.WorkingDirectory = workingDirectory;
-            //startInfo.Verb = "runAs";
             //startInfo.WindowStyle = ProcessWindowStyle.Minimized;
 
+            startInfo.RedirectStandardInput = true;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
+            startInfo.UseShellExecute = false;
+
             var process = Process.Start(startInfo);
+
+            //process.OutputDataReceived += (s, e) => Console.WriteLine(e.Data);
+            //process.ErrorDataReceived += (s, e) => Console.WriteLine(e.Data);
+
+            //process.BeginOutputReadLine();
+            //process.BeginErrorReadLine();
+
             return process;
         }
 
@@ -131,29 +142,39 @@
                 {
                     try
                     {
-                        //process.Kill();
+                        Console.WriteLine($"Closing {process.ProcessName}");
+                        process.StandardInput.Write('\u0003');
+                        process.StandardInput.Write("\x03");
+                        process.StandardInput.Flush();
+                        process.StandardInput.Close();
+                        process.StandardInput.Dispose();
                     }
-                    catch (InvalidOperationException) { }
+                    catch (InvalidOperationException iox)
+                    {
+                        Console.WriteLine(iox);
+                    }
                 }
             };
 
             public void Close()
             {
-                if (process != null && !process.HasExited)
+                if (process != null && process.HasExited)
                 {
-                    try
-                    {
-                        closeAction(process);
-                    }
-                    catch (InvalidOperationException x)
-                    {
-                        Console.WriteLine(x.Message);
-                        Console.WriteLine(x.StackTrace);
-                    }
-                    finally
-                    {
-                        process.Dispose();
-                    }
+                    return;
+                }
+
+                try
+                {
+                    closeAction(process);
+                }
+                catch (InvalidOperationException x)
+                {
+                    Console.WriteLine(x.Message);
+                    Console.WriteLine(x.StackTrace);
+                }
+                finally
+                {
+                    process?.Dispose();
                 }
             }
         }
