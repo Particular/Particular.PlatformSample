@@ -1,7 +1,7 @@
 ﻿namespace Particular.PlatformSample.Tests
 {
     using System;
-    using System.IO;
+    using System.Threading;
     using NUnit.Framework;
 
     [Explicit]
@@ -11,7 +11,12 @@
         [Test]
         public void Launch()
         {
-            PlatformLauncher.Launch(Console.Out, new StringReader(Environment.NewLine));
+            PlatformLauncher.LaunchInternal(Console.Out, Console.In, () =>
+            {
+                Console.WriteLine("Platform is launched, waiting 1s");
+                Thread.Sleep(1000);
+                Console.WriteLine("Shutting down platform");
+            });
         }
     }
 }

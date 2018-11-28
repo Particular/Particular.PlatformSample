@@ -8,9 +8,9 @@
         [Test]
         public void FindsSolutionRoot()
         {
-            var root = Finder.FindSolutionRoot();
+            var finder = new Finder();
 
-            StringAssert.EndsWith("src", root);
+            StringAssert.EndsWith("src", finder.SolutionRoot);
         }
     }
 }

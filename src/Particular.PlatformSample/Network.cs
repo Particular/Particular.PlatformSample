@@ -1,5 +1,6 @@
 ﻿namespace Particular
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
@@ -48,7 +49,7 @@
             return results;
         }
 
-        public static void WaitForHttpOk(string url, int timeoutMilliseconds = 1000)
+        public static void WaitForHttpOk(string url, int timeoutMilliseconds = 1000, string httpVerb = "HEAD")
         {
             HttpStatusCode status;
 
@@ -56,7 +57,7 @@
             {
                 Thread.Sleep(timeoutMilliseconds);
                 var request = (HttpWebRequest)WebRequest.Create(url);
-                request.Method = "HEAD";
+                request.Method = httpVerb;
                 try
                 {
                     var response = (HttpWebResponse)request.GetResponse();
@@ -73,6 +74,8 @@
                         status = HttpStatusCode.Ambiguous;
                     }
                 }
+
+                Console.WriteLine(status);
             }
             while (status != HttpStatusCode.OK);
         }

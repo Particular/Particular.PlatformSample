@@ -4,9 +4,11 @@
     using System.IO;
     using System.Linq;
 
-    static class Finder
+    class Finder
     {
-        public static string FindSolutionRoot()
+        public string SolutionRoot { get; }
+
+        public Finder()
         {
             var directory = AppDomain.CurrentDomain.BaseDirectory;
 
@@ -14,7 +16,8 @@
             {
                 if (Directory.EnumerateFiles(directory).Any(file => file.EndsWith(".sln")))
                 {
-                    return directory;
+                    SolutionRoot = directory;
+                    return;
                 }
 
                 var parent = Directory.GetParent(directory);
@@ -27,6 +30,13 @@
 
                 directory = parent.FullName;
             }
+        }
+
+        public string GetDirectory(string relativePath)
+        {
+            var fullPath = Path.GetFullPath(Path.Combine(SolutionRoot, relativePath));
+            Directory.CreateDirectory(fullPath);
+            return fullPath;
         }
     }
 }

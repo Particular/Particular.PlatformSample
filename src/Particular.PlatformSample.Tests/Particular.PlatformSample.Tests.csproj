@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="xcopy /E /I &quot;$(SolutionDir)Particular.PlatformSample\platform&quot; &quot;$(TargetDir)platform&quot;" />
+    <Exec Command="xcopy /E /I /Y /Q &quot;$(SolutionDir)Particular.PlatformSample\platform&quot; &quot;$(TargetDir)platform&quot;" />
   </Target>
 
 </Project>

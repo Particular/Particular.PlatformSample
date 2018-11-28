@@ -22,6 +22,15 @@
         /// <param name="input"></param>
         public static void Launch(TextWriter output, TextReader input)
         {
+            LaunchInternal(output, input, () =>
+            {
+                output.WriteLine("Press Enter to stop Particular Service Platform tools.");
+                input.ReadLine();
+            });
+        }
+
+        internal static void LaunchInternal(TextWriter output, TextReader input, Action interactive)
+        {
             var ports = Network.FindAvailablePorts(PortStartSearch, 4);
 
             var controlPort = ports[0];
@@ -34,33 +43,37 @@
             output.WriteLine($"Found free port '{monitoringPort}' for ServiceControl Monitoring");
             output.WriteLine($"Found free port '{pulsePort}' for ServicePulse");
 
-            var solutionFolder = Finder.FindSolutionRoot();
-            output.WriteLine("Solution Folder: " + solutionFolder);
+            var finder = new Finder();
+
+            output.WriteLine("Solution Folder: " + finder.SolutionRoot);
 
             output.WriteLine("Creating log folders");
-            Directory.CreateDirectory(Path.Combine(solutionFolder, @".\.logs\monitoring"));
-            Directory.CreateDirectory(Path.Combine(solutionFolder, @".\.logs\servicecontrol"));
+            var monitoringLogs = finder.GetDirectory(@".\.logs\monitoring");
+            var controlLogs = finder.GetDirectory(@".\.logs\servicecontrol");
+            var controlDB = finder.GetDirectory(@".\.db");
 
             output.WriteLine("Creating transport folder");
-            Directory.CreateDirectory(Path.Combine(solutionFolder, @".\.learningtransport"));
+            var transportPath = finder.GetDirectory(@".\.learningtransport");
+            Directory.CreateDirectory(transportPath);
 
             using (var launcher = new AppLauncher())
             {
                 output.WriteLine("Launching ServiceControl");
-                launcher.ServiceControl(controlPort, maintenancePort);
+                launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath);
 
                 output.WriteLine("Waiting for ServiceControl to be available...");
-                //Network.WaitForHttpOk($"http://localhost:{controlPort}");
+                Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET");
 
-                output.WriteLine("Launching ServiceControl Monitoring");
-                launcher.Monitoring(monitoringPort);
+                //output.WriteLine("Launching ServiceControl Monitoring");
+                //launcher.Monitoring(monitoringPort);
 
-                output.WriteLine("Launching ServicePulse");
-                launcher.ServicePulse(pulsePort);
+                //output.WriteLine("Launching ServicePulse");
+                //launcher.ServicePulse(pulsePort);
 
-                output.WriteLine("Press Enter to stop Particular Service Platform tools.");
-                input.ReadLine();
+                interactive();
             }
-        }   
+        }
+
+
     }
 }
