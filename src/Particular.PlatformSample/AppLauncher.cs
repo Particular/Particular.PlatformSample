@@ -32,16 +32,38 @@
             control = new ProcessCloser(proc, ProcessCloser.CtrlC);
         }
 
-        public void Monitoring(int port)
+        public void Monitoring(int port, string logPath, string transportPath)
         {
+            var config = GetResource("Particular.configs.ServiceControl.Monitoring.exe.config");
+
+            config = config.Replace("{MonitoringPort}", port.ToString());
+            config = config.Replace("{LogPath}", logPath);
+            config = config.Replace("{TransportPath}", transportPath);
+
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe.config");
+
+            File.WriteAllText(configPath, config, Encoding.UTF8);
+
             var proc = StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe");
             monitoring = new ProcessCloser(proc, ProcessCloser.CtrlC);
         }
 
-        public void ServicePulse(int port)
+        public void ServicePulse(int port, int serviceControlPort, int monitoringPort)
         {
-            var proc = StartProcess(@"servicepulse\ServicePulse.Host.exe", $"--url=\"http://localhost:{port}\"");
-            pulse = new ProcessCloser(proc, ProcessCloser.CtrlC);
+            var config = GetResource("Particular.configs.app.constants.js");
+
+            config = config.Replace("{ServiceControlPort}", serviceControlPort.ToString());
+            config = config.Replace("{MonitoringPort}", monitoringPort.ToString());
+
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicepulse\js\app.constants.js");
+
+            File.WriteAllText(configPath, config, Encoding.UTF8);
+
+            //var url = $"http://localhost:{port}";
+            //var proc = StartProcess(@"servicepulse\ServicePulse.Host.exe", $"--url=\"{url}\"");
+            pulse = null;//new ProcessCloser(proc, ProcessCloser.CtrlC);
+
+            //Process.Start(url);
         }
 
         static Process StartProcess(string relativeExePath, string arguments = null)
@@ -51,7 +73,7 @@
 
             var startInfo = new ProcessStartInfo(fullExePath, arguments);
             startInfo.WorkingDirectory = workingDirectory;
-            startInfo.Verb = "runAs";
+            //startInfo.Verb = "runAs";
             //startInfo.WindowStyle = ProcessWindowStyle.Minimized;
 
             var process = Process.Start(startInfo);
@@ -105,7 +127,7 @@
                 {
                     try
                     {
-                        process.Kill();
+                        //process.Kill();
                     }
                     catch (InvalidOperationException) { }
                 }

@@ -13,8 +13,8 @@
         {
             PlatformLauncher.LaunchInternal(Console.Out, Console.In, () =>
             {
-                Console.WriteLine("Platform is launched, waiting 1s");
-                Thread.Sleep(1000);
+                Console.WriteLine("Platform is launched, waiting 10s");
+                Thread.Sleep(10000);
                 Console.WriteLine("Shutting down platform");
             });
         }

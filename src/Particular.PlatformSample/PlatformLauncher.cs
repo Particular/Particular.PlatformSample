@@ -64,11 +64,11 @@
                 output.WriteLine("Waiting for ServiceControl to be available...");
                 Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET");
 
-                //output.WriteLine("Launching ServiceControl Monitoring");
-                //launcher.Monitoring(monitoringPort);
+                output.WriteLine("Launching ServiceControl Monitoring");
+                launcher.Monitoring(monitoringPort, monitoringLogs, transportPath);
 
-                //output.WriteLine("Launching ServicePulse");
-                //launcher.ServicePulse(pulsePort);
+                output.WriteLine("Launching ServicePulse");
+                launcher.ServicePulse(pulsePort, controlPort, monitoringPort);
 
                 interactive();
             }
