@@ -3,6 +3,7 @@
     using System;
     using System.Diagnostics;
     using System.IO;
+    using System.Runtime.InteropServices;
     using System.Threading;
 
     /// <summary>
@@ -25,6 +26,14 @@
         /// <param name="showPlatformToolConsoleOutput"></param>
         public static void Launch(TextWriter output, TextReader input, bool showPlatformToolConsoleOutput = false)
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                output.WriteLine("The Particular Service Platform can currently only be run on the Windows platform.");
+                output.WriteLine("Press Enter to exit...");
+                input.ReadLine();
+                return;
+            }
+
             var wait = new ManualResetEvent(false);
 
             Console.CancelKeyPress += (sender, args) =>
