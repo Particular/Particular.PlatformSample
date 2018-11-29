@@ -85,8 +85,10 @@
                 output.WriteLine("Waiting for ServiceControl to be available...");
                 Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET");
 
-                output.WriteLine("Launching ServicePulse in a browser window...");
                 var servicePulseUrl = $"http://localhost:{pulsePort}";
+                output.WriteLine();
+                output.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
+                output.WriteLine("Attempting to launch ServicePulse in a browser window...");
                 Process.Start(servicePulseUrl);
 
                 output.WriteLine();
