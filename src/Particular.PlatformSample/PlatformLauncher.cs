@@ -89,7 +89,7 @@
                 output.WriteLine();
                 output.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
                 output.WriteLine("Attempting to launch ServicePulse in a browser window...");
-                Process.Start(servicePulseUrl);
+                Process.Start(new ProcessStartInfo(servicePulseUrl) {UseShellExecute = true});
 
                 output.WriteLine();
                 interactive();
