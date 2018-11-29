@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\Particular.PlatformSample\**\platform\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Particular.PlatformSample\platform\**\*" CopyToOutputDirectory="PreserveNewest" Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>
