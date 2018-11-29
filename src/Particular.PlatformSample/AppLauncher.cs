@@ -77,22 +77,18 @@
 
             var startInfo = new ProcessStartInfo(fullExePath, arguments);
             startInfo.WorkingDirectory = workingDirectory;
-            //startInfo.WindowStyle = ProcessWindowStyle.Minimized;
-
-            startInfo.RedirectStandardInput = true;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.RedirectStandardError = true;
             startInfo.UseShellExecute = false;
 
-            var process = Process.Start(startInfo);
+            var hideConsoleOutput = true;
 
-            //process.OutputDataReceived += (s, e) => Console.WriteLine(e.Data);
-            //process.ErrorDataReceived += (s, e) => Console.WriteLine(e.Data);
+            if (hideConsoleOutput)
+            {
+                startInfo.RedirectStandardOutput = true;
+                startInfo.RedirectStandardError = true;
+            }
 
-            //process.BeginOutputReadLine();
-            //process.BeginErrorReadLine();
 
-            return process;
+            return Process.Start(startInfo);
         }
 
         static string GetResource(string resourceName)
@@ -134,20 +130,14 @@
                 this.process = process;
                 this.closeAction = closeAction;
             }
-
-            public static Action<Process> CloseMainWindow => process => process.CloseMainWindow();
+            
             public static Action<Process> CtrlC => process =>
             {
                 if (!process.HasExited)
                 {
                     try
                     {
-                        Console.WriteLine($"Closing {process.ProcessName}");
-                        process.StandardInput.Write('\u0003');
-                        process.StandardInput.Write("\x03");
-                        process.StandardInput.Flush();
-                        process.StandardInput.Close();
-                        process.StandardInput.Dispose();
+                        process.WaitForExit();
                     }
                     catch (InvalidOperationException iox)
                     {

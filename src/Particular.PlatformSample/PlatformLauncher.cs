@@ -2,6 +2,7 @@
 {
     using System;
     using System.IO;
+    using System.Threading;
 
     /// <summary>
     /// stub
@@ -22,11 +23,20 @@
         /// <param name="input"></param>
         public static void Launch(TextWriter output, TextReader input)
         {
+            var wait = new ManualResetEvent(false);
+
+            Console.CancelKeyPress += (sender, args) =>
+            {
+                args.Cancel = true;
+                wait.Set();
+            };
+
             LaunchInternal(output, input, () =>
             {
-                output.WriteLine("Press Enter to stop Particular Service Platform tools.");
-                input.ReadLine();
+                output.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
+                wait.WaitOne();
             });
+
         }
 
         internal static void LaunchInternal(TextWriter output, TextReader input, Action interactive)
@@ -73,7 +83,5 @@
                 interactive();
             }
         }
-
-
     }
 }
