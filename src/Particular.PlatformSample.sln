@@ -7,7 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Particular.PlatformSample",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Particular.PlatformSample.Tests", "Particular.PlatformSample.Tests\Particular.PlatformSample.Tests.csproj", "{F3A7A868-8A52-4265-A218-F82DF8AE2BEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmokeTest", "SmokeTest\SmokeTest.csproj", "{6A64070A-8650-416E-AFA7-75923BC85430}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmokeTest", "SmokeTest\SmokeTest.csproj", "{6A64070A-8650-416E-AFA7-75923BC85430}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C70B4945-48B8-43A8-8518-3326D771DB89}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		..\GitVersion.yml = ..\GitVersion.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
