@@ -1,6 +1,7 @@
 ﻿namespace Particular
 {
     using System;
+    using System.Diagnostics;
     using System.IO;
     using System.Threading;
 
@@ -17,7 +18,7 @@
         public static void Launch(bool showPlatformToolConsoleOutput = false) => Launch(Console.Out, Console.In, showPlatformToolConsoleOutput);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="output"></param>
         /// <param name="input"></param>
@@ -36,6 +37,9 @@
             {
                 output.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
                 wait.WaitOne();
+
+                output.WriteLine();
+                output.WriteLine("Waiting for external processes to shut down...");
             });
 
         }
@@ -71,9 +75,6 @@
                 output.WriteLine("Launching ServiceControl");
                 launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath);
 
-                output.WriteLine("Waiting for ServiceControl to be available...");
-                Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET");
-
                 output.WriteLine("Launching ServiceControl Monitoring");
                 // Monitoring appends `.learningtransport` to the transport path on its own
                 launcher.Monitoring(monitoringPort, monitoringLogs, finder.SolutionRoot);
@@ -81,6 +82,14 @@
                 output.WriteLine("Launching ServicePulse");
                 launcher.ServicePulse(pulsePort, controlPort, monitoringPort);
 
+                output.WriteLine("Waiting for ServiceControl to be available...");
+                Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET");
+
+                output.WriteLine("Launching ServicePulse in a browser window...");
+                var servicePulseUrl = $"http://localhost:{pulsePort}";
+                Process.Start(servicePulseUrl);
+
+                output.WriteLine();
                 interactive();
             }
         }

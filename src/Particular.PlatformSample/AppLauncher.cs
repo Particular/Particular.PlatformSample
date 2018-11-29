@@ -80,9 +80,6 @@
             sp.Run();
 
             cleanupActions.Push(() => sp.Stop());
-
-            var url = $"http://localhost:{port}";
-            Process.Start(url);
         }
 
         Process StartProcess(string relativeExePath, string arguments = null)
