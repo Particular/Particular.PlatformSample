@@ -1,6 +1,7 @@
 ﻿namespace Particular
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
     using System.Reflection;
@@ -9,14 +10,13 @@
     class AppLauncher : IDisposable
     {
         const string platformPath = @".\platform";
-        ProcessCloser control;
-        ProcessCloser monitoring;
-        ProcessCloser pulse;
         bool hideConsoleOutput;
+        Stack<Action> cleanupActions;
 
         public AppLauncher(bool showPlatformToolConsoleOutput)
         {
             this.hideConsoleOutput = !showPlatformToolConsoleOutput;
+            cleanupActions = new Stack<Action>();
         }
 
         public void ServiceControl(int port, int maintenancePort, string logPath, string dbPath, string transportPath)
@@ -35,7 +35,11 @@
 
             var proc = StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.exe");
 
-            control = new ProcessCloser(proc, ProcessCloser.CtrlC);
+            cleanupActions.Push(() =>
+            {
+                proc.WaitForExit();
+                proc.Dispose();
+            });
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -51,7 +55,12 @@
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
             var proc = StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe");
-            monitoring = new ProcessCloser(proc, ProcessCloser.CtrlC);
+
+            cleanupActions.Push(() =>
+            {
+                proc.WaitForExit();
+                proc.Dispose();
+            });
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort)
@@ -70,7 +79,7 @@
 
             sp.Run();
 
-            pulse = new ProcessCloser(null, _ => sp.Stop());
+            cleanupActions.Push(() => sp.Stop());
 
             var url = $"http://localhost:{port}";
             Process.Start(url);
@@ -91,7 +100,6 @@
                 startInfo.RedirectStandardError = true;
             }
 
-
             return Process.Start(startInfo);
         }
 
@@ -108,9 +116,11 @@
 
         void CloseAll()
         {
-            pulse?.Close();
-            monitoring?.Close();
-            control?.Close();
+            while (cleanupActions.Count > 0)
+            {
+                var action = cleanupActions.Pop();
+                action();
+            }
         }
 
         public void Dispose()
@@ -122,55 +132,6 @@
         ~AppLauncher()
         {
             CloseAll();
-        }
-
-        class ProcessCloser
-        {
-            Process process;
-            Action<Process> closeAction;
-
-            public ProcessCloser(Process process, Action<Process> closeAction)
-            {
-                this.process = process;
-                this.closeAction = closeAction;
-            }
-            
-            public static Action<Process> CtrlC => process =>
-            {
-                if (!process.HasExited)
-                {
-                    try
-                    {
-                        process.WaitForExit();
-                    }
-                    catch (InvalidOperationException iox)
-                    {
-                        Console.WriteLine(iox);
-                    }
-                }
-            };
-
-            public void Close()
-            {
-                if (process != null && process.HasExited)
-                {
-                    return;
-                }
-
-                try
-                {
-                    closeAction(process);
-                }
-                catch (InvalidOperationException x)
-                {
-                    Console.WriteLine(x.Message);
-                    Console.WriteLine(x.StackTrace);
-                }
-                finally
-                {
-                    process?.Dispose();
-                }
-            }
         }
     }
 

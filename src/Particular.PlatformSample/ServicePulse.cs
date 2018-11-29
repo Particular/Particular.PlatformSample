@@ -38,10 +38,7 @@
         {
             Console.WriteLine("Shutting down ServicePulse");
             shutdown.Cancel();
-
-            Console.WriteLine("Shutting down ServicePulse - waiting for shutdown");
             runHostTask.GetAwaiter().GetResult();
-            Console.WriteLine("Shutting down ServicePulse - complete");
         }
     }
 
