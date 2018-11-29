@@ -16,13 +16,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="platform\**\*.*" />
-    <Content Include="platform\**\*.*" Pack="true" PackagePath="platform" />
+    <None Remove="platform\**\*" />
+    <Content Include="platform\**\*" Pack="true" PackagePath="platform" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="configs\*.*" />
-    <EmbeddedResource Include="configs\*.*" />
+    <None Remove="buildProps\**\*" />
+    <Content Include="buildProps\**\*" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="configs\*" />
+    <EmbeddedResource Include="configs\*" />
   </ItemGroup>
 
 </Project>
