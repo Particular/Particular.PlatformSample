@@ -14,14 +14,15 @@
         /// <summary>
         /// stub
         /// </summary>
-        public static void Launch() => Launch(Console.Out, Console.In);
+        public static void Launch(bool showPlatformToolConsoleOutput = false) => Launch(Console.Out, Console.In, showPlatformToolConsoleOutput);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="output"></param>
         /// <param name="input"></param>
-        public static void Launch(TextWriter output, TextReader input)
+        /// <param name="showPlatformToolConsoleOutput"></param>
+        public static void Launch(TextWriter output, TextReader input, bool showPlatformToolConsoleOutput = false)
         {
             var wait = new ManualResetEvent(false);
 
@@ -31,7 +32,7 @@
                 wait.Set();
             };
 
-            LaunchInternal(output, input, () =>
+            LaunchInternal(output, input, showPlatformToolConsoleOutput, () =>
             {
                 output.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
                 wait.WaitOne();
@@ -39,7 +40,7 @@
 
         }
 
-        internal static void LaunchInternal(TextWriter output, TextReader input, Action interactive)
+        internal static void LaunchInternal(TextWriter output, TextReader input, bool showPlatformToolConsoleOutput, Action interactive)
         {
             var ports = Network.FindAvailablePorts(PortStartSearch, 4);
 
@@ -65,7 +66,7 @@
             output.WriteLine("Creating transport folder");
             var transportPath = finder.GetDirectory(@".\.learningtransport");
 
-            using (var launcher = new AppLauncher())
+            using (var launcher = new AppLauncher(showPlatformToolConsoleOutput))
             {
                 output.WriteLine("Launching ServiceControl");
                 launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath);

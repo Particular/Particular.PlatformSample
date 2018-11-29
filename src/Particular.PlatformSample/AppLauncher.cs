@@ -12,6 +12,12 @@
         ProcessCloser control;
         ProcessCloser monitoring;
         ProcessCloser pulse;
+        bool hideConsoleOutput;
+
+        public AppLauncher(bool showPlatformToolConsoleOutput)
+        {
+            this.hideConsoleOutput = !showPlatformToolConsoleOutput;
+        }
 
         public void ServiceControl(int port, int maintenancePort, string logPath, string dbPath, string transportPath)
         {
@@ -70,7 +76,7 @@
             Process.Start(url);
         }
 
-        static Process StartProcess(string relativeExePath, string arguments = null)
+        Process StartProcess(string relativeExePath, string arguments = null)
         {
             var fullExePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, platformPath, relativeExePath));
             var workingDirectory = Path.GetDirectoryName(fullExePath);
@@ -78,8 +84,6 @@
             var startInfo = new ProcessStartInfo(fullExePath, arguments);
             startInfo.WorkingDirectory = workingDirectory;
             startInfo.UseShellExecute = false;
-
-            var hideConsoleOutput = true;
 
             if (hideConsoleOutput)
             {
