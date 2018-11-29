@@ -26,6 +26,7 @@
                 .UseKestrel()
                 .UseContentRoot(webroot)
                 .UseUrls($"http://localhost:{port}")
+                .UseSetting(WebHostDefaults.SuppressStatusMessagesKey, "True")
                 .UseStartup<Startup>()
                 .UseWebRoot(webroot)
                 .Build();
