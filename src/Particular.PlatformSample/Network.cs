@@ -8,22 +8,6 @@
 
     static class Network
     {
-        public static bool IsPortAvailable(int port)
-        {
-            var ipGlobalProps = IPGlobalProperties.GetIPGlobalProperties();
-            var listeners = ipGlobalProps.GetActiveTcpListeners();
-
-            foreach (var ipEndpoint in listeners)
-            {
-                if (ipEndpoint.Port == port)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         public static int[] FindAvailablePorts(int startingPort, int count)
         {
             var results = new int[count];

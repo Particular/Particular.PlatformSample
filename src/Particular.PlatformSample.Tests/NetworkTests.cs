@@ -8,21 +8,6 @@
     [TestFixture]
     public class NetworkTests
     {
-
-        [Test]
-        public void CheckPort()
-        {
-            var ipGlobalProps = IPGlobalProperties.GetIPGlobalProperties();
-            var listeners = ipGlobalProps.GetActiveTcpListeners();
-            var knownTakenPort = listeners.First().Port;
-
-            var random = Network.IsPortAvailable(98457);
-            var knownTaken = Network.IsPortAvailable(knownTakenPort);
-
-            Assert.IsTrue(random);
-            Assert.IsFalse(knownTaken);
-        }
-
         [Test]
         public void FindAvailablePorts()
         {
