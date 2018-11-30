@@ -14,16 +14,23 @@
         const int PortStartSearch = 33533;
 
         /// <summary>
-        /// stub
+        /// Launches Particular Service Platform tools (ServiceControl, ServiceControl Monitoring, and ServicePulse) in a single process
+        /// using the Learning Transport in order to demonstrate platform usage in a sample or test project. Not to be used outside of a
+        /// test/demo context. In real life, each tool should be installed as a Windows service, and used with a production-ready
+        /// message transport.
         /// </summary>
+        /// <param name="showPlatformToolConsoleOutput">By default the output of each application is suppressed. Set to true to show tool output in the console window.</param>
         public static void Launch(bool showPlatformToolConsoleOutput = false) => Launch(Console.Out, Console.In, showPlatformToolConsoleOutput);
 
         /// <summary>
-        ///
+        /// Launches Particular Service Platform tools (ServiceControl, ServiceControl Monitoring, and ServicePulse) in a single process
+        /// using the Learning Transport in order to demonstrate platform usage in a sample or test project. Not to be used outside of a
+        /// test/demo context. In real life, each tool should be installed as a Windows service, and used with a production-ready
+        /// message transport.
         /// </summary>
-        /// <param name="output"></param>
-        /// <param name="input"></param>
-        /// <param name="showPlatformToolConsoleOutput"></param>
+        /// <param name="output">Select an output stream other than Console.Out.</param>
+        /// <param name="input">Select an input stream other than Console.In.</param>
+        /// <param name="showPlatformToolConsoleOutput">By default the output of each application is suppressed. Set to true to show tool output in the console window.</param>
         public static void Launch(TextWriter output, TextReader input, bool showPlatformToolConsoleOutput = false)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -53,7 +60,7 @@
 
         }
 
-        internal static void LaunchInternal(TextWriter output, TextReader input, bool showPlatformToolConsoleOutput, Action interactive)
+        static void LaunchInternal(TextWriter output, TextReader input, bool showPlatformToolConsoleOutput, Action interactive)
         {
             var ports = Network.FindAvailablePorts(PortStartSearch, 4);
 
