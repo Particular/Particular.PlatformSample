@@ -39,14 +39,14 @@
             shutdown.Cancel();
             runHostTask.GetAwaiter().GetResult();
         }
-    }
 
-    class Startup
-    {
-        public void Configure(IApplicationBuilder app)
+        class Startup
         {
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
+            public void Configure(IApplicationBuilder app)
+            {
+                app.UseDefaultFiles();
+                app.UseStaticFiles();
+            }
         }
     }
 }
