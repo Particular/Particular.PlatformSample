@@ -111,24 +111,13 @@
             }
         }
 
-        void CloseAll()
+        public void Dispose()
         {
             while (cleanupActions.Count > 0)
             {
                 var action = cleanupActions.Pop();
                 action();
             }
-        }
-
-        public void Dispose()
-        {
-            CloseAll();
-            GC.SuppressFinalize(this);
-        }
-
-        ~AppLauncher()
-        {
-            CloseAll();
         }
     }
 
