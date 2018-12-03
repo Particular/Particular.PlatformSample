@@ -43,12 +43,6 @@
                 tokenSource.Cancel();
             };
 
-            AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
-            {
-                wait.Set();
-                tokenSource.Cancel();
-            };
-
             var ports = Network.FindAvailablePorts(PortStartSearch, 4);
 
             var controlPort = ports[0];
