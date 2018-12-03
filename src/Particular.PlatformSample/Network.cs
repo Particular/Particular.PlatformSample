@@ -50,11 +50,11 @@
             }
         }
 
-        public static void WaitForHttpOk(string url, int timeoutMilliseconds = 1000, string httpVerb = "HEAD")
+        public static void WaitForHttpOk(string url, CancellationToken cancellationToken, int timeoutMilliseconds = 1000, string httpVerb = "HEAD")
         {
-            HttpStatusCode status;
+            var status = HttpStatusCode.Ambiguous;
 
-            do
+            while(!cancellationToken.IsCancellationRequested && status != HttpStatusCode.OK)
             {
                 Thread.Sleep(timeoutMilliseconds);
                 var request = (HttpWebRequest)WebRequest.Create(url);
@@ -76,7 +76,6 @@
                     }
                 }
             }
-            while (status != HttpStatusCode.OK);
         }
     }
 }

@@ -15,6 +15,8 @@
     {
         const int PortStartSearch = 49_200;
 
+        static CancellationTokenSource tokenSource = new CancellationTokenSource();
+
         /// <summary>
         /// Launches Particular Service Platform tools (ServiceControl, ServiceControl Monitoring, and ServicePulse) in a single process
         /// using the Learning Transport in order to demonstrate platform usage in a sample or test project. Not to be used outside of a
@@ -38,6 +40,13 @@
             {
                 args.Cancel = true;
                 wait.Set();
+                tokenSource.Cancel();
+            };
+
+            AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
+            {
+                wait.Set();
+                tokenSource.Cancel();
             };
 
             var ports = Network.FindAvailablePorts(PortStartSearch, 4);
@@ -77,17 +86,20 @@
                 launcher.ServicePulse(pulsePort, controlPort, monitoringPort);
 
                 Console.WriteLine("Waiting for ServiceControl to be available...");
-                Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET");
+                Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET", cancellationToken: tokenSource.Token);
 
-                var servicePulseUrl = $"http://localhost:{pulsePort}";
-                Console.WriteLine();
-                Console.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
-                Console.WriteLine("Attempting to launch ServicePulse in a browser window...");
-                Process.Start(new ProcessStartInfo(servicePulseUrl) {UseShellExecute = true});
+                if (!tokenSource.IsCancellationRequested)
+                {
+                    var servicePulseUrl = $"http://localhost:{pulsePort}";
+                    Console.WriteLine();
+                    Console.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
+                    Console.WriteLine("Attempting to launch ServicePulse in a browser window...");
+                    Process.Start(new ProcessStartInfo(servicePulseUrl) { UseShellExecute = true });
 
-                Console.WriteLine();
-                Console.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
-                wait.WaitOne();
+                    Console.WriteLine();
+                    Console.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
+                    wait.WaitOne();
+                }
 
                 Console.WriteLine();
                 Console.WriteLine("Waiting for external processes to shut down...");
