@@ -13,7 +13,7 @@
     /// </summary>
     public static class PlatformLauncher
     {
-        const int PortStartSearch = 50000;
+        const int PortStartSearch = 49_200;
 
         /// <summary>
         /// Launches Particular Service Platform tools (ServiceControl, ServiceControl Monitoring, and ServicePulse) in a single process
