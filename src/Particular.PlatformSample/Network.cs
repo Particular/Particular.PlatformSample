@@ -5,7 +5,6 @@
     using System.Linq;
     using System.Net;
     using System.Net.NetworkInformation;
-    using System.Net.Sockets;
     using System.Threading;
 
     static class Network
@@ -22,15 +21,12 @@
 
             for (var i = 0; i < count; i++)
             {
-                while (hashSet.Contains(startingPort))
+                while (hashSet.Contains(startingPort) || !TestPort(startingPort))
                 {
                     startingPort++;
                 }
 
-                if (TestPort(startingPort))
-                {
-                    results[i] = startingPort;
-                }
+                results[i] = startingPort;
                 startingPort++;
             }
 
@@ -43,7 +39,6 @@
 
             var httpListener = new HttpListener();
             httpListener.Prefixes.Add($"http://localhost:{port}/");
-            //httpListener.Prefixes.Add($"http://+:{port}/");
 
             try
             {
