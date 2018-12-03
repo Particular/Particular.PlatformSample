@@ -40,19 +40,21 @@
         static bool TestPort(int port)
         {
             Console.WriteLine("Testing port " + port);
-            var testListener = new TcpListener(IPAddress.Loopback, port);
+
+            var httpListener = new HttpListener();
+            httpListener.Prefixes.Add($"http://localhost:{port}/");
+            //httpListener.Prefixes.Add($"http://+:{port}/");
+
             try
             {
-                testListener.Start();
+                httpListener.Start();
+                httpListener.Stop();
                 return true;
             }
-            catch (Exception)
+            catch (Exception x)
             {
+                Console.WriteLine(x);
                 return false;
-            }
-            finally
-            {
-                testListener.Stop();
             }
         }
 
