@@ -35,8 +35,6 @@
 
         static bool TestPort(int port)
         {
-            Console.WriteLine("Testing port " + port);
-
             var httpListener = new HttpListener();
             httpListener.Prefixes.Add($"http://localhost:{port}/");
 
@@ -46,9 +44,8 @@
                 httpListener.Stop();
                 return true;
             }
-            catch (Exception x)
+            catch (Exception)
             {
-                Console.WriteLine(x);
                 return false;
             }
         }
