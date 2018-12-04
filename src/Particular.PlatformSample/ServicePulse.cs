@@ -7,9 +7,10 @@
 
     class ServicePulse
     {
+        readonly int port;
+        readonly string webroot;
+
         IWebHost host;
-        int port;
-        string webroot;
         Task runHostTask;
         CancellationTokenSource shutdown;
 
@@ -17,7 +18,7 @@
         {
             this.port = port;
             this.webroot = webroot;
-            this.shutdown = new CancellationTokenSource();
+            shutdown = new CancellationTokenSource();
         }
 
         public void Run()

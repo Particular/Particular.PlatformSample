@@ -10,14 +10,14 @@
     class AppLauncher : IDisposable
     {
         const string platformPath = @".\platform";
-        bool hideConsoleOutput;
-        Stack<Action> cleanupActions;
-        Job platformJob;
+        readonly bool hideConsoleOutput;
+        readonly Stack<Action> cleanupActions;
+        readonly Job platformJob;
 
         public AppLauncher(bool showPlatformToolConsoleOutput)
         {
             platformJob = new Job("Particular.PlatformSample");
-            this.hideConsoleOutput = !showPlatformToolConsoleOutput;
+            hideConsoleOutput = !showPlatformToolConsoleOutput;
             cleanupActions = new Stack<Action>();
         }
 
@@ -71,7 +71,7 @@
 
             sp.Run();
 
-            cleanupActions.Push(() => sp.Stop());
+            cleanupActions.Push(sp.Stop);
         }
 
         Process StartProcess(string relativeExePath, string arguments = null)
@@ -79,9 +79,11 @@
             var fullExePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, platformPath, relativeExePath));
             var workingDirectory = Path.GetDirectoryName(fullExePath);
 
-            var startInfo = new ProcessStartInfo(fullExePath, arguments);
-            startInfo.WorkingDirectory = workingDirectory;
-            startInfo.UseShellExecute = false;
+            var startInfo = new ProcessStartInfo(fullExePath, arguments)
+            {
+                WorkingDirectory = workingDirectory,
+                UseShellExecute = false
+            };
 
             if (hideConsoleOutput)
             {

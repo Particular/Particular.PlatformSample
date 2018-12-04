@@ -15,7 +15,7 @@
     {
         const int PortStartSearch = 49_200;
 
-        static CancellationTokenSource tokenSource = new CancellationTokenSource();
+        static readonly CancellationTokenSource tokenSource = new CancellationTokenSource();
 
         /// <summary>
         /// Launches Particular Service Platform tools (ServiceControl, ServiceControl Monitoring, and ServicePulse) in a single process

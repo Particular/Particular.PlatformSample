@@ -36,6 +36,7 @@
         {
             var fullPath = Path.GetFullPath(Path.Combine(SolutionRoot, relativePath));
             Directory.CreateDirectory(fullPath);
+
             return fullPath;
         }
     }
