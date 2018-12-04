@@ -12,9 +12,11 @@
         const string platformPath = @".\platform";
         bool hideConsoleOutput;
         Stack<Action> cleanupActions;
+        Job platformJob;
 
         public AppLauncher(bool showPlatformToolConsoleOutput)
         {
+            platformJob = new Job("Particular.PlatformSample");
             this.hideConsoleOutput = !showPlatformToolConsoleOutput;
             cleanupActions = new Stack<Action>();
         }
@@ -34,12 +36,7 @@
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
             var proc = StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.exe");
-
-            cleanupActions.Push(() =>
-            {
-                proc.WaitForExit();
-                proc.Dispose();
-            });
+            platformJob.AddProcess(proc);
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -55,12 +52,7 @@
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
             var proc = StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe");
-
-            cleanupActions.Push(() =>
-            {
-                proc.WaitForExit();
-                proc.Dispose();
-            });
+            platformJob.AddProcess(proc);
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort)
@@ -118,6 +110,8 @@
                 var action = cleanupActions.Pop();
                 action();
             }
+
+            platformJob.Dispose();
         }
     }
 
