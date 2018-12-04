@@ -26,28 +26,21 @@
 
             if (!SetInformationJobObject(handle, JobObjectInfoType.ExtendedLimitInformation, extendedInfoPtr, (uint)length))
             {
-                throw new Exception($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
+                throw new Exception($"Unable to set information. Error: {Marshal.GetLastWin32Error()}");
             }
         }
+
+        public bool AddProcess(Process process) => AddProcess(process.Handle);
+
+        public bool AddProcess(int processId) => AddProcess(Process.GetProcessById(processId).Handle);
+
+        public bool AddProcess(IntPtr processHandle) => AssignProcessToJobObject(handle, processHandle);
 
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        static extern IntPtr CreateJobObject(IntPtr a, string lpName);
-
-        [DllImport("kernel32.dll")]
-        static extern bool SetInformationJobObject(IntPtr hJob, JobObjectInfoType infoType, IntPtr lpJobObjectInfo, UInt32 cbJobObjectInfoLength);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool CloseHandle(IntPtr hObject);
 
         void Dispose(bool disposing)
         {
@@ -64,23 +57,21 @@
             }
         }
 
-        public bool AddProcess(Process process)
-        {
-            return AddProcess(process.Handle);
-        }
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        static extern IntPtr CreateJobObject(IntPtr a, string lpName);
 
-        public bool AddProcess(IntPtr processHandle)
-        {
-            return AssignProcessToJobObject(handle, processHandle);
-        }
+        [DllImport("kernel32.dll")]
+        static extern bool SetInformationJobObject(IntPtr hJob, JobObjectInfoType infoType, IntPtr lpJobObjectInfo, uint cbJobObjectInfoLength);
 
-        public bool AddProcess(int processId)
-        {
-            return AddProcess(Process.GetProcessById(processId).Handle);
-        }
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
 
-        private IntPtr handle;
-        private bool disposed;
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool CloseHandle(IntPtr hObject);
+
+        IntPtr handle;
+        bool disposed;
     }
 
     #region Helper classes
@@ -88,35 +79,35 @@
     [StructLayout(LayoutKind.Sequential)]
     struct IO_COUNTERS
     {
-        public UInt64 ReadOperationCount;
-        public UInt64 WriteOperationCount;
-        public UInt64 OtherOperationCount;
-        public UInt64 ReadTransferCount;
-        public UInt64 WriteTransferCount;
-        public UInt64 OtherTransferCount;
+        public ulong ReadOperationCount;
+        public ulong WriteOperationCount;
+        public ulong OtherOperationCount;
+        public ulong ReadTransferCount;
+        public ulong WriteTransferCount;
+        public ulong OtherTransferCount;
     }
 
 
     [StructLayout(LayoutKind.Sequential)]
     struct JOBOBJECT_BASIC_LIMIT_INFORMATION
     {
-        public Int64 PerProcessUserTimeLimit;
-        public Int64 PerJobUserTimeLimit;
-        public UInt32 LimitFlags;
+        public long PerProcessUserTimeLimit;
+        public long PerJobUserTimeLimit;
+        public uint LimitFlags;
         public UIntPtr MinimumWorkingSetSize;
         public UIntPtr MaximumWorkingSetSize;
-        public UInt32 ActiveProcessLimit;
+        public uint ActiveProcessLimit;
         public UIntPtr Affinity;
-        public UInt32 PriorityClass;
-        public UInt32 SchedulingClass;
+        public uint PriorityClass;
+        public uint SchedulingClass;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     struct SECURITY_ATTRIBUTES
     {
-        public UInt32 nLength;
+        public uint nLength;
         public IntPtr lpSecurityDescriptor;
-        public Int32 bInheritHandle;
+        public int bInheritHandle;
     }
 
     [StructLayout(LayoutKind.Sequential)]
