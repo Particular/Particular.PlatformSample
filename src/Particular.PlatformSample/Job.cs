@@ -58,16 +58,10 @@
 
             if (disposing)
             {
+                CloseHandle(handle);
+                handle = IntPtr.Zero;
+                disposed = true;
             }
-
-            Close();
-            disposed = true;
-        }
-
-        void Close()
-        {
-            CloseHandle(handle);
-            handle = IntPtr.Zero;
         }
 
         public bool AddProcess(Process process)
