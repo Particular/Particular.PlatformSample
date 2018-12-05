@@ -4,7 +4,7 @@
         .constant('version', '1.15.0')
         .constant('showPendingRetry', false)
         .constant('scConfig', {
-            default_route: '/dashboard',
+            default_route: '{DefaultRoute}',
             service_control_url: 'http://localhost:{ServiceControlPort}/api',
             monitoring_urls: ['http://localhost:{MonitoringPort}/']
         });
