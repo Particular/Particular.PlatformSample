@@ -93,12 +93,14 @@
             }
 
             var process = Process.Start(startInfo);
+
             // without this in certain occasions the start takes waaaaay longer!
             if (hideConsoleOutput)
             {
                 process.BeginErrorReadLine();
                 process.BeginOutputReadLine();
             }
+
             return process;
         }
 

@@ -23,8 +23,8 @@
         /// test/demo context. In real life, each tool should be installed as a Windows service, and used with a production-ready
         /// message transport.
         /// </summary>
-        /// <param name="showPlatformToolConsoleOutput">By default the output of each application is suppressed. Set to true to show tool output in the console window.</param>
-        /// <param name="servicePulseDefaultRoute">By default the ServicePulse dashboard (/dashboard) is displayed. Set the default route to any valid ServicePulse route such as (/monitored_endpoints).</param>
+        /// <param name="showPlatformToolConsoleOutput">By default, the output of each application is suppressed. Set to true to show tool output in the console window.</param>
+        /// <param name="servicePulseDefaultRoute">By default, the ServicePulse dashboard (/dashboard) is displayed. Set the default route to any valid ServicePulse route such as (/monitored_endpoints).</param>
         public static void Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

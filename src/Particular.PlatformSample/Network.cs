@@ -42,6 +42,7 @@
             {
                 httpListener.Start();
                 httpListener.Stop();
+
                 return true;
             }
             catch (Exception)
@@ -58,6 +59,7 @@
             {
                 var request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = httpVerb;
+
                 try
                 {
                     Console.Write(".");
@@ -78,6 +80,7 @@
                     Thread.Sleep(timeoutMilliseconds);
                 }
             }
+
             Console.WriteLine();
         }
     }
