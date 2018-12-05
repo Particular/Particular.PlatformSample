@@ -79,7 +79,7 @@
                 Console.WriteLine("Launching ServicePulse");
                 launcher.ServicePulse(pulsePort, controlPort, monitoringPort);
 
-                Console.WriteLine("Waiting for ServiceControl to be available...");
+                Console.Write("Waiting for ServiceControl to be available");
                 Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET", cancellationToken: tokenSource.Token);
 
                 if (!tokenSource.IsCancellationRequested)

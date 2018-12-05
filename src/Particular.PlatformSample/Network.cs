@@ -56,11 +56,11 @@
 
             while(!cancellationToken.IsCancellationRequested && status != HttpStatusCode.OK)
             {
-                Thread.Sleep(timeoutMilliseconds);
                 var request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = httpVerb;
                 try
                 {
+                    Console.Write(".");
                     var response = (HttpWebResponse)request.GetResponse();
                     status = response.StatusCode;
                 }
@@ -74,8 +74,11 @@
                     {
                         status = HttpStatusCode.Ambiguous;
                     }
+
+                    Thread.Sleep(timeoutMilliseconds);
                 }
             }
+            Console.WriteLine();
         }
     }
 }
