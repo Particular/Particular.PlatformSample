@@ -91,7 +91,14 @@
                 startInfo.RedirectStandardError = true;
             }
 
-            return Process.Start(startInfo);
+            var process = Process.Start(startInfo);
+            // without this in certain occasions the start takes waaaaay longer!
+            if (hideConsoleOutput)
+            {
+                process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
+            }
+            return process;
         }
 
         static string GetResource(string resourceName)
