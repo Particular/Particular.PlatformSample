@@ -55,10 +55,11 @@
             platformJob.AddProcess(proc);
         }
 
-        public void ServicePulse(int port, int serviceControlPort, int monitoringPort)
+        public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
         {
             var config = GetResource("Particular.configs.app.constants.js");
 
+            config = config.Replace("{DefaultRoute}", defaultRoute ?? "/dashboard");
             config = config.Replace("{ServiceControlPort}", serviceControlPort.ToString());
             config = config.Replace("{MonitoringPort}", monitoringPort.ToString());
 

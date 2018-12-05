@@ -24,7 +24,8 @@
         /// message transport.
         /// </summary>
         /// <param name="showPlatformToolConsoleOutput">By default the output of each application is suppressed. Set to true to show tool output in the console window.</param>
-        public static void Launch(bool showPlatformToolConsoleOutput = false)
+        /// <param name="servicePulseDefaultRoute">By default the ServicePulse dashboard (/dashboard) is displayed. Set the default route to any valid ServicePulse route such as (/monitored_endpoints).</param>
+        public static void Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -77,7 +78,7 @@
                 launcher.Monitoring(monitoringPort, monitoringLogs, finder.SolutionRoot);
 
                 Console.WriteLine("Launching ServicePulse");
-                launcher.ServicePulse(pulsePort, controlPort, monitoringPort);
+                launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
 
                 Console.Write("Waiting for ServiceControl to be available");
                 Network.WaitForHttpOk($"http://localhost:{controlPort}/api", httpVerb: "GET", cancellationToken: tokenSource.Token);
