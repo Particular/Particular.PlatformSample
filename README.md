@@ -62,19 +62,20 @@ For now, the platform binaries (or in the case of ServicePulse, web assets) are 
 
 First, update local binaries:
 
-1. Install the updated version of ServiceControl.
-2. Using ServiceControl Management, update local ServiceControl and Monitoring instances to the latest versions.
-
-Next, update the repository binaries:
-
-1. Copy the ServiceControl binaries to the repository.
-    * Usually found in `C:\Program Files (x86)\Particular Software\Particular.ServiceControl`.
-    * Copy to `src\Particular.PlatformSample\platform\servicecontrol\servicecontrol-instance`.
-    * Do not copy the `.diagnostics` directory. Remove it from the repository if present.
-2. Copy the ServiceControl.Monitoring bianries to the repository. 
-    * Usually found in `C:\Program Files (x86)\Particular Software\Particular.Monitoring`.
-    * Copy to `src\Particular.PlatformSample\platform\servicecontrol\monitoring-instance`.
-    * Do not copy the `.diagnostics` directory. Remove it from the repository if present.
+1. Install the updated version of ServiceControl Management. Updating any ServiceControl/Monitoring instances is not required.
+2. Find the install directory, typically `C:\Program Files (x86)\Particular Software\ServiceControl Management`.
+3. Copy the zip files to a temporary location and extract:
+    * Particular.ServiceControl-{VERSION}.zip
+    * Particular.Servicecontrol.Monitoring-{VERSION}.zip
+4. Update the ServiceControl binaries:
+    1. In the repository, delete the contents of `src\Particular.PlatformSample\platform\servicecontrol\servicecontrol-instance`.
+    2. Replace with the contents of the `ServiceControl` folder from the ServiceControl zip file.
+    3. Add the contents of the `Transports/LearningTransport` folder from the ServiceControl zip file.
+    4. Ensure ServiceControl is using at least NServiceBus 7.1.6 because of the LearningTransport bug originally [raised as #5299](https://github.com/Particular/NServiceBus/pull/5299) and [hotfixed as 7.1.6](https://github.com/Particular/ServiceControl/pull/1522). Replace the binary with 7.1.6 or higher if necessary. *This line can be removed after a maintenance release of ServiceControl includes NServiceBus 7.1.6.*
+5. Update the Monitoring binaries:
+    1. In the repository, delete the contents of  `src\Particular.PlatformSample\platform\servicecontrol\monitoring-instance`.
+    2. Replace with the contents of the `ServiceControl.Monitoring` folder from the Monitoring zip file.
+    3. Add the contents of the `Transports/LearningTransport` folder from the Monitoring zip file. This will include duplicates (things like Autofac, Nancy, etc.) that you can just not replace in the destination directory.
 
 Lastly, check the configuration files for structural changes:
 
