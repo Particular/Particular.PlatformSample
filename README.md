@@ -60,8 +60,6 @@ For now, the platform binaries (or in the case of ServicePulse, web assets) are 
 
 ### Updating ServiceControl & Monitoring
 
-First, update local binaries:
-
 1. Install the updated version of ServiceControl Management. Updating any ServiceControl/Monitoring instances is not required.
 2. Find the install directory, typically `C:\Program Files (x86)\Particular Software\ServiceControl Management`.
 3. Copy the zip files to a temporary location and extract:
@@ -76,11 +74,9 @@ First, update local binaries:
     1. In the repository, delete the contents of  `src\Particular.PlatformSample\platform\servicecontrol\monitoring-instance`.
     2. Replace with the contents of the `ServiceControl.Monitoring` folder from the Monitoring zip file.
     3. Add the contents of the `Transports/LearningTransport` folder from the Monitoring zip file. This will include duplicates (things like Autofac, Nancy, etc.) that you can just not replace in the destination directory.
-
-Lastly, check the configuration files for structural changes:
-
-* The config files in [src/Particular.PlatformSample/configs](https://github.com/Particular/Particular.PlatformSample/tree/master/src/Particular.PlatformSample/configs) are embedded resources that use simple string replacement to replace values such as `{ServiceControlPort}` with the correct values.
-* Compare the **ServiceControl.exe.config** and **Servicecontrol.Monitoring.exe.config** files to the newly updated sources ensuring the structure is the same, given that `TransportType` will be configured for the Learning Transport. Consult with ServiceControl maintainers if necessary.
+6. Check the new configuration files for structural changes:
+    * The config files in [src/Particular.PlatformSample/configs](https://github.com/Particular/Particular.PlatformSample/tree/master/src/Particular.PlatformSample/configs) are embedded resources that use simple string replacement to replace values such as `{ServiceControlPort}` with the correct values.
+    * Compare the **ServiceControl.exe.config** and **Servicecontrol.Monitoring.exe.config** files to the newly updated sources ensuring the structure is the same, given that `TransportType` will be configured for the Learning Transport. Consult with ServiceControl maintainers if necessary.
 
 When finished, commit the changes to a branch and raise a pull request against master.
 
