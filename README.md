@@ -76,7 +76,7 @@ For now, the platform binaries (or in the case of ServicePulse, web assets) are 
     * Compare the **ServiceControl.exe.config** and **Servicecontrol.Monitoring.exe.config** files to the newly updated sources ensuring the structure is the same, given that `TransportType` will be configured for the Learning Transport. Consult with ServiceControl maintainers if necessary.
 5. Remove any pdb files or config files that show up as file additions in the git diff.
 
-When finished, commit the changes to a branch and raise a pull request against master. Debug 
+When finished, commit the changes to a branch and raise a pull request against master. 
 
 ### Updating ServicePulse
 
