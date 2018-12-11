@@ -60,25 +60,23 @@ For now, the platform binaries (or in the case of ServicePulse, web assets) are 
 
 ### Updating ServiceControl & Monitoring
 
-1. Install the updated version of ServiceControl Management. Updating any ServiceControl/Monitoring instances is not required.
-2. Find the install directory, typically `C:\Program Files (x86)\Particular Software\ServiceControl Management`.
-3. Copy the zip files to a temporary location and extract:
-    * Particular.ServiceControl-{VERSION}.zip
-    * Particular.Servicecontrol.Monitoring-{VERSION}.zip
-4. Update the ServiceControl binaries:
+1. In TeamCity, find the latest ServiceControl build on the `master` branch, download the following artifacts, and unzip:
+    * zip/Particular.ServiceControl-{VERSION}.zip
+    * zip/Particular.Servicecontrol.Monitoring-{VERSION}.zip
+2. Update the ServiceControl binaries:
     1. In the repository, delete the contents of `src\Particular.PlatformSample\platform\servicecontrol\servicecontrol-instance`.
     2. Replace with the contents of the `ServiceControl` folder from the ServiceControl zip file.
     3. Add the contents of the `Transports/LearningTransport` folder from the ServiceControl zip file.
-    4. Ensure ServiceControl is using at least NServiceBus 7.1.6 because of the LearningTransport bug originally [raised as #5299](https://github.com/Particular/NServiceBus/pull/5299) and [hotfixed as 7.1.6](https://github.com/Particular/ServiceControl/pull/1522). Replace the binary with 7.1.6 or higher if necessary. *This line can be removed after a maintenance release of ServiceControl includes NServiceBus 7.1.6.*
-5. Update the Monitoring binaries:
+3. Update the Monitoring binaries:
     1. In the repository, delete the contents of  `src\Particular.PlatformSample\platform\servicecontrol\monitoring-instance`.
     2. Replace with the contents of the `ServiceControl.Monitoring` folder from the Monitoring zip file.
-    3. Add the contents of the `Transports/LearningTransport` folder from the Monitoring zip file. This will include duplicates (things like Autofac, Nancy, etc.) that you can just not replace in the destination directory.
-6. Check the new configuration files for structural changes:
+    3. Add the contents of the `Transports/LearningTransport` folder from the Monitoring zip file. This will include duplicates (things like Autofac, Nancy, etc.) that you can just not replace in the destination directory. Also skip 
+4. Check the new configuration files for structural changes:
     * The config files in [src/Particular.PlatformSample/configs](https://github.com/Particular/Particular.PlatformSample/tree/master/src/Particular.PlatformSample/configs) are embedded resources that use simple string replacement to replace values such as `{ServiceControlPort}` with the correct values.
     * Compare the **ServiceControl.exe.config** and **Servicecontrol.Monitoring.exe.config** files to the newly updated sources ensuring the structure is the same, given that `TransportType` will be configured for the Learning Transport. Consult with ServiceControl maintainers if necessary.
+5. Remove any pdb files or config files that show up as file additions in the git diff.
 
-When finished, commit the changes to a branch and raise a pull request against master.
+When finished, commit the changes to a branch and raise a pull request against master. Debug 
 
 ### Updating ServicePulse
 
