@@ -85,6 +85,10 @@
 
                 if (!tokenSource.IsCancellationRequested)
                 {
+                    var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
+                    Console.WriteLine();
+                    Console.WriteLine($"ServiceControl API can now be accessed via: {serviceControlApiUrl}");
+                    
                     var servicePulseUrl = $"http://localhost:{pulsePort}";
                     Console.WriteLine();
                     Console.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
