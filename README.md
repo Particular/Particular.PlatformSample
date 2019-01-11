@@ -1,4 +1,4 @@
-# Particular.PlatformSample
+# NOT A REAL EDIT - BUT I AM EXTERNAL!
 
 A package containing the Particular Service Platform for use in samples and tutorials. The package can be used within a sample or tutorial to demonstrate platform capabilities without requiring the user to install the platform or any other dependencies.
 
