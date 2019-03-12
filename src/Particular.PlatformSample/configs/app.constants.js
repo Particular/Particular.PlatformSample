@@ -8,7 +8,7 @@
     };
 
     angular.module('sc')
-        .constant('version', '1.15.0')
+        .constant('version', '{Version}')
         .constant('showPendingRetry', false)
         .constant('scConfig', window.config);
 

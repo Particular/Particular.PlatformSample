@@ -23,4 +23,25 @@
     <EmbeddedResource Include="configs\*" />
   </ItemGroup>
 
+  <Target Name="WriteServicePulseVersion" BeforeTargets="CoreCompile">
+
+    <PropertyGroup>
+      <ServicePulseVersion Condition="%(PackageReference.Identity) == 'Particular.PlatformSample.ServicePulse'">%(PackageReference.Version)</ServicePulseVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <AssemblyAttributes Include="ServicePulseVersionAttribute">
+        <_Parameter1>$(ServicePulseVersion)</_Parameter1>
+      </AssemblyAttributes>
+    </ItemGroup>
+
+    <WriteCodeFragment AssemblyAttributes="@(AssemblyAttributes)" Language="C#" OutputDirectory="$(IntermediateOutputPath)" OutputFile="ServicePulseAttribute.g.cs" />
+
+    <ItemGroup>
+       <Compile Include="$(IntermediateOutputPath)\ServicePulseAttribute.g.cs" />
+       <FileWrites Include="$(IntermediateOutputPath)\ServicePulseAttribute.g.cs" />
+    </ItemGroup>
+
+  </Target>
+
 </Project>
