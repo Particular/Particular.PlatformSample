@@ -56,7 +56,7 @@ Particular.PlatformLauncher.Launch(servicePulseDefaultRoute: "/monitoring");
 
 ## Updating
 
-ServiceControl, ServiceControl.Monitoring, and ServicePulse are all NuGet packaged dependencies of this project. Each of these publishes a PlatformSample specific NuGet with each release:
+ServiceControl, ServiceControl.Monitoring, and ServicePulse are all NuGet package dependencies of this project. Each of these publishes a PlatformSample specific NuGet with each release:
 
 `Particular.PlatformSample.ServiceControl`
 `Particular.PlatformSample.ServiceControl.Monitoring`
