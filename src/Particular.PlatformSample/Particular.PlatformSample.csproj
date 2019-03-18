@@ -13,21 +13,35 @@
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.1.3" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.1.1" />
     <PackageReference Include="Particular.Packaging" Version="0.2.1" PrivateAssets="all" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="platform\**\*" />
-    <Content Include="platform\**\*" Pack="true" PackagePath="platform" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="buildProps\**\*" />
-    <Content Include="buildProps\**\*" Pack="true" PackagePath="" />
+    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="3.6.8" PrivateAssets="none" />
+    <PackageReference Include="Particular.PlatformSample.ServiceControl.Monitoring" Version="2.2.0" PrivateAssets="none" />
+    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.18.0" PrivateAssets="none" />
   </ItemGroup>
 
   <ItemGroup>
     <None Remove="configs\*" />
     <EmbeddedResource Include="configs\*" />
   </ItemGroup>
+
+  <Target Name="WriteServicePulseVersion" BeforeTargets="CoreCompile">
+
+    <PropertyGroup>
+      <ServicePulseVersion Condition="%(PackageReference.Identity) == 'Particular.PlatformSample.ServicePulse'">%(PackageReference.Version)</ServicePulseVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <AssemblyAttributes Include="ServicePulseVersionAttribute">
+        <_Parameter1>$(ServicePulseVersion)</_Parameter1>
+      </AssemblyAttributes>
+    </ItemGroup>
+
+    <WriteCodeFragment AssemblyAttributes="@(AssemblyAttributes)" Language="C#" OutputDirectory="$(IntermediateOutputPath)" OutputFile="ServicePulseAttribute.g.cs" />
+
+    <ItemGroup>
+       <Compile Include="$(IntermediateOutputPath)\ServicePulseAttribute.g.cs" />
+       <FileWrites Include="$(IntermediateOutputPath)\ServicePulseAttribute.g.cs" />
+    </ItemGroup>
+
+  </Target>
 
 </Project>

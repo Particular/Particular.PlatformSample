@@ -59,6 +59,7 @@
         {
             var config = GetResource("Particular.configs.app.constants.js");
 
+            config = config.Replace("{Version}", typeof(ServicePulse).Assembly.GetCustomAttribute<ServicePulseVersionAttribute>().Version);
             config = config.Replace("{DefaultRoute}", defaultRoute ?? "/dashboard");
             config = config.Replace("{ServiceControlPort}", serviceControlPort.ToString());
             config = config.Replace("{MonitoringPort}", monitoringPort.ToString());
