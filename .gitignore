@@ -5,6 +5,7 @@
 
 # Specific to this project
 .db
+.audit-db
 .logs
 .learningtransport
 

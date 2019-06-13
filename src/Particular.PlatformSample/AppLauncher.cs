@@ -21,11 +21,12 @@
             cleanupActions = new Stack<Action>();
         }
 
-        public void ServiceControl(int port, int maintenancePort, string logPath, string dbPath, string transportPath)
+        public void ServiceControl(int port, int maintenancePort, string logPath, string dbPath, string transportPath, int auditPort)
         {
             var config = GetResource("Particular.configs.ServiceControl.exe.config");
 
             config = config.Replace("{ServiceControlPort}", port.ToString());
+            config = config.Replace("{AuditPort}", auditPort.ToString());
             config = config.Replace("{MaintenancePort}", maintenancePort.ToString());
             config = config.Replace("{LogPath}", logPath);
             config = config.Replace("{DbPath}", dbPath);
@@ -36,6 +37,24 @@
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
             var proc = StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.exe");
+            platformJob.AddProcess(proc);
+        }
+
+        public void ServiceControlAudit(int port, int maintenancePort, string logPath, string dbPath, string transportPath)
+        {
+            var config = GetResource("Particular.configs.ServiceControl.Audit.exe.config");
+
+            config = config.Replace("{Port}", port.ToString());
+            config = config.Replace("{MaintenancePort}", maintenancePort.ToString());
+            config = config.Replace("{LogPath}", logPath);
+            config = config.Replace("{DbPath}", dbPath);
+            config = config.Replace("{TransportPath}", transportPath);
+
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe.config");
+
+            File.WriteAllText(configPath, config, Encoding.UTF8);
+
+            var proc = StartProcess(@"servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe");
             platformJob.AddProcess(proc);
         }
 
