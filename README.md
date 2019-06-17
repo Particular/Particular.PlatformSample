@@ -83,5 +83,6 @@ As we don't care about patching older releases, the Platform Sample uses a simpl
 * To create a production release, label the master branch with the full version number, and trigger a build.
 * All normal releases (most often updating the platform tools versions) should increment the minor.
   * A major version need only be released in the event of a breaking change in the API.
+  * Patch releases generally should be avoided. If one is necessary, the release branch would need to be created from the point of the labeled minor, and the patch released from there.
 * Once a release is built on master, promote to Deploy, which sends it to Octopus and MyGet.
 * Deploy to NuGet by promoting in Octopus.
