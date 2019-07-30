@@ -44,15 +44,19 @@
                 tokenSource.Cancel();
             };
 
-            var ports = Network.FindAvailablePorts(PortStartSearch, 4);
+            var ports = Network.FindAvailablePorts(PortStartSearch, 6);
 
             var controlPort = ports[0];
-            var maintenancePort = ports[1];
-            var monitoringPort = ports[2];
-            var pulsePort = ports[3];
+            var auditPort = ports[1];
+            var maintenancePort = ports[2];
+            var auditMaintenancePort = ports[3];
+            var monitoringPort = ports[4];
+            var pulsePort = ports[5];
 
             Console.WriteLine($"Found free port '{controlPort}' for ServiceControl");
+            Console.WriteLine($"Found free port '{auditPort}' for ServiceControl Audit");
             Console.WriteLine($"Found free port '{maintenancePort}' for ServiceControl Maintenance");
+            Console.WriteLine($"Found free port '{auditMaintenancePort}' for ServiceControl Audit Maintenance");
             Console.WriteLine($"Found free port '{monitoringPort}' for ServiceControl Monitoring");
             Console.WriteLine($"Found free port '{pulsePort}' for ServicePulse");
 
@@ -64,6 +68,8 @@
             var monitoringLogs = finder.GetDirectory(@".\.logs\monitoring");
             var controlLogs = finder.GetDirectory(@".\.logs\servicecontrol");
             var controlDB = finder.GetDirectory(@".\.db");
+            var auditLogs = finder.GetDirectory(@".\.logs\servicecontrol-audit");
+            var auditDB = finder.GetDirectory(@".\.audit-db");
 
             Console.WriteLine("Creating transport folder");
             var transportPath = finder.GetDirectory(@".\.learningtransport");
@@ -71,7 +77,10 @@
             using (var launcher = new AppLauncher(showPlatformToolConsoleOutput))
             {
                 Console.WriteLine("Launching ServiceControl");
-                launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath);
+                launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath, auditPort);
+
+                Console.WriteLine("Launching ServiceControl Audit");
+                launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, auditDB, transportPath);
 
                 Console.WriteLine("Launching ServiceControl Monitoring");
                 // Monitoring appends `.learningtransport` to the transport path on its own
@@ -88,7 +97,7 @@
                     var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
                     Console.WriteLine();
                     Console.WriteLine($"ServiceControl API can now be accessed via: {serviceControlApiUrl}");
-                    
+
                     var servicePulseUrl = $"http://localhost:{pulsePort}";
                     Console.WriteLine();
                     Console.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");

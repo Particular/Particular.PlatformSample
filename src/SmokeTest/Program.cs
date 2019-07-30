@@ -8,7 +8,7 @@
         {
             try
             {
-                Particular.PlatformLauncher.Launch();
+                Particular.PlatformLauncher.Launch(showPlatformToolConsoleOutput: true);
             }
             catch (Exception e)
             {
