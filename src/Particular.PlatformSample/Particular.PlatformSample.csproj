@@ -13,8 +13,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.1.3" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.1.1" />
     <PackageReference Include="Particular.Packaging" Version="0.3.0" PrivateAssets="all" />
-    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="4.4.0" PrivateAssets="none" />
-    <PackageReference Include="Particular.PlatformSample.ServiceControl.Monitoring" Version="4.4.0" PrivateAssets="none" />
+    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="4.4.1" PrivateAssets="none" />
+    <PackageReference Include="Particular.PlatformSample.ServiceControl.Monitoring" Version="4.4.1" PrivateAssets="none" />
     <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.22.0" PrivateAssets="none" />
   </ItemGroup>
 
