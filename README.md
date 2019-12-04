@@ -97,4 +97,4 @@ For that reason, a new minor release of Particular.PlatformSample must (unfortun
 
 The NuGet client [has an open issue to allow users to determine package resolution strategy](https://github.com/nuget/home/issues/5553), which is [now unblocked](https://github.com/nuget/home/issues/5553#issuecomment-511509174) but is not yet prioritized. (Previously it was waiting on a [packages lockfile feature](https://docs.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies) that has now been released in NuGet 4.9 / Visual Studio 2017 15.9.)
 
-However, even once the issue above is addressed, new versions of Particular.PlatformSample must _still_ be shipped in order to support users running Visual Studio 2017 or 2019 that contain the old NuGet client.
+However, even once the issue above is addressed, new versions of Particular.PlatformSample must _still_ be shipped when dependencies are updated in order to support users running Visual Studio 2017 or 2019 that contain the old NuGet client.
