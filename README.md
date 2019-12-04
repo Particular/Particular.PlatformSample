@@ -86,3 +86,11 @@ As we don't care about patching older releases, the Platform Sample uses a simpl
   * Patch releases generally should be avoided. If one is necessary, the release branch would need to be created from the point of the labeled minor, and the patch released from there.
 * Once a release is built on master, promote to Deploy, which sends it to Octopus and MyGet.
 * Deploy to NuGet by promoting in Octopus.
+
+### Why not use version ranges / wildcard dependency?
+
+If, for example, Particular.PlatformSample were to reference Particular.PlatformSample.ServiceControl (>= 4.0.0 && < 5.0.0), a NuGet bug/behavior (depending on your frame of reference) would cause a project referencing Particular.PlatformSample to resolve the **lowest matching** version within that range. The effect would be that updated Particular.PlatformSample.ServiceControl would not automatically be deployed in projects unless the end user explicitly updated that package to latest.
+
+For that reason, a new minor release of Particular.PlatformSample must (unfortunately) be released every time one of the underlying packages is updated
+
+The NuGet client is expected to begin offering the ability to control resolution of transitive dependencies in X, which will ship with Visual Studio Y. However, even then new versions of Particular.PlatformSample must be shipped in order to support users running Visual Studio 2019 (specific minors) as well as all users running Visual Studio 2017.
