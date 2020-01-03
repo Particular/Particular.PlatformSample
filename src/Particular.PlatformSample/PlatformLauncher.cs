@@ -83,8 +83,7 @@
                 launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, auditDB, transportPath);
 
                 Console.WriteLine("Launching ServiceControl Monitoring");
-                // Monitoring appends `.learningtransport` to the transport path on its own
-                launcher.Monitoring(monitoringPort, monitoringLogs, finder.SolutionRoot);
+                launcher.Monitoring(monitoringPort, monitoringLogs, transportPath);
 
                 Console.WriteLine("Launching ServicePulse");
                 launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
