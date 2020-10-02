@@ -55,7 +55,7 @@
         {
             var status = HttpStatusCode.Ambiguous;
 
-            while(!cancellationToken.IsCancellationRequested && status != HttpStatusCode.OK)
+            while (!cancellationToken.IsCancellationRequested && status != HttpStatusCode.OK)
             {
                 var request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = httpVerb;
