@@ -10,10 +10,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Particular.CodeRules" Version="0.7.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="..\Particular.PlatformSample\platform\**\*" CopyToOutputDirectory="PreserveNewest" Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
