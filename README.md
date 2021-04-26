@@ -80,7 +80,7 @@ When finished, commit the changes to a branch and raise a pull request against m
 As we don't care about patching older releases, the Platform Sample uses a simplified version of Release Flow that, in most cases, does not require `release-X.Y` branches.
 
 * Builds on the master branch will, by default, create an alpha version of the next minor.
-* To create a production release, label the master branch with the full version number. GitHub Actions will build it and push it to Octopus & MyGet.
+* To create a production release, label the master branch with the full version number. GitHub Actions will build it and push it to Octopus.
 * All normal releases (most often updating the platform tools versions) should increment the minor.
   * A major version need only be released in the event of a breaking change in the API.
   * Patch releases generally should be avoided. If one is necessary, a release branch would need to be created from the point of the labeled minor, and the patch released from there.
