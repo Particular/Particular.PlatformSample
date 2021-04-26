@@ -51,7 +51,7 @@
             }
         }
 
-        public static void WaitForHttpOk(string url, CancellationToken cancellationToken, int timeoutMilliseconds = 1000, string httpVerb = "HEAD")
+        public static void WaitForHttpOk(string url, int timeoutMilliseconds = 1000, string httpVerb = "HEAD", CancellationToken cancellationToken = default)
         {
             var status = HttpStatusCode.Ambiguous;
 
