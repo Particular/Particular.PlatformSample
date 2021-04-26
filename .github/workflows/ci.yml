@@ -34,5 +34,4 @@ jobs:
           path: nugets/
           retention-days: 7
       - name: Run Windows tests
-        if: matrix.name == 'Windows'
         run: dotnet test src --configuration Release --no-build --logger "GitHubActions;report-warnings=false"
