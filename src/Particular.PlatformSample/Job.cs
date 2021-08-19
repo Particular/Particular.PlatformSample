@@ -77,7 +77,9 @@
     #region Helper classes
 
     [StructLayout(LayoutKind.Sequential)]
+#pragma warning disable PS0024 // A non-interface type should not be prefixed with I
     struct IO_COUNTERS
+#pragma warning restore PS0024 // A non-interface type should not be prefixed with I
     {
         public ulong ReadOperationCount;
         public ulong WriteOperationCount;
