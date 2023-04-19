@@ -14,7 +14,7 @@
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
     <PackageReference Include="Particular.Packaging" Version="2.3.0" PrivateAssets="all" />
     <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="4.30.0" PrivateAssets="none" />
-    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.35.0" PrivateAssets="none" />
+    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.35.1" PrivateAssets="none" />
   </ItemGroup>
 
   <ItemGroup>
