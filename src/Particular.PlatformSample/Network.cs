@@ -4,8 +4,10 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
     using System.Net.NetworkInformation;
     using System.Threading;
+    using System.Threading.Tasks;
 
     static class Network
     {
@@ -51,24 +53,26 @@
             }
         }
 
-        public static void WaitForHttpOk(string url, int timeoutMilliseconds = 1000, string httpVerb = "HEAD", CancellationToken cancellationToken = default)
+        public static async Task WaitForHttpOk(string url, int timeoutMilliseconds = 1000, CancellationToken cancellationToken = default)
         {
             var status = HttpStatusCode.Ambiguous;
+            var c = new HttpClient();
 
             while (!cancellationToken.IsCancellationRequested && status != HttpStatusCode.OK)
             {
-                var request = (HttpWebRequest)WebRequest.Create(url);
-                request.Method = httpVerb;
-
                 try
                 {
                     Console.Write(".");
-                    var response = (HttpWebResponse)request.GetResponse();
+                    var response = await c.GetAsync(url, cancellationToken)
+                        .ConfigureAwait(false);
+
                     status = response.StatusCode;
                 }
-                catch (WebException wx)
+#pragma warning disable IDE0083 // Use pattern matching
+                catch (Exception ex) when (!(ex is OperationCanceledException) && !cancellationToken.IsCancellationRequested)
+#pragma warning restore IDE0083 // Use pattern matching
                 {
-                    if (wx.Response is HttpWebResponse response)
+                    if (ex is WebException wx && wx.Response is HttpWebResponse response)
                     {
                         status = response.StatusCode;
                     }
@@ -76,8 +80,8 @@
                     {
                         status = HttpStatusCode.Ambiguous;
                     }
-
-                    Thread.Sleep(timeoutMilliseconds);
+                    await Task.Delay(timeoutMilliseconds, cancellationToken)
+                        .ConfigureAwait(false);
                 }
             }
 

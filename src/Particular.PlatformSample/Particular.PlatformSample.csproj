@@ -22,6 +22,10 @@
     <EmbeddedResource Include="configs\*" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
   <Target Name="WriteServicePulseVersion" BeforeTargets="CoreCompile">
 
     <PropertyGroup>

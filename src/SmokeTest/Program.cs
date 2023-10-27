@@ -1,14 +1,16 @@
 ﻿namespace SmokeTest
 {
     using System;
+    using System.Threading.Tasks;
 
     class Program
     {
-        static void Main()
+        static async Task Main()
         {
             try
             {
-                Particular.PlatformLauncher.Launch(showPlatformToolConsoleOutput: true);
+                await Particular.PlatformLauncher.Launch(showPlatformToolConsoleOutput: false)
+                    .ConfigureAwait(false);
             }
             catch (Exception e)
             {
