@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
-    <PackageReference Include="Particular.Packaging" Version="3.0.0" PrivateAssets="all" />
+    <PackageReference Include="Particular.Packaging" Version="4.0.0" PrivateAssets="all" />
     <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="5.0.0-alpha.2" PrivateAssets="none" />
     <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.37.0" PrivateAssets="none" />
   </ItemGroup>
