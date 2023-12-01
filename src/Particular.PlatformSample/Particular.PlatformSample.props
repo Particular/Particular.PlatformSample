@@ -1,13 +1,13 @@
 ﻿<Project>
 
-  <Target Name="RemoveNoneItemsFromCandidateAssemblyFiles" BeforeTargets="ResolveAssemblyReferences" Condition="'$(TargetFramework)' == 'net472'">
+  <Target Name="RemoveNoneItemsFromCandidateAssemblyFiles" BeforeTargets="ResolveAssemblyReferences" Condition="$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net472'))">
     <ItemGroup>
       <Saved Include="@(None)" />
       <None Remove="@(None)" />
     </ItemGroup>
   </Target>
 
-  <Target Name="RestoreNoneItems" AfterTargets="ResolveAssemblyReferences" Condition="'$(TargetFramework)' == 'net472'">
+  <Target Name="RestoreNoneItems" AfterTargets="ResolveAssemblyReferences" Condition="$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net472'))">
     <ItemGroup>
       <None Include="@(Saved)" />
       <Saved Remove="@(Saved)" />
