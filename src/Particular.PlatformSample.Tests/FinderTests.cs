@@ -10,7 +10,7 @@
         {
             var finder = new Finder();
 
-            StringAssert.EndsWith("src", finder.SolutionRoot);
+            Assert.That(finder.SolutionRoot, Does.EndWith("src"));
         }
     }
 }

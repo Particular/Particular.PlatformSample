@@ -16,9 +16,13 @@
             var knownTakenPort = listeners.First().Port;
 
             var results = Network.FindAvailablePorts(knownTakenPort, 5);
-            Assert.AreEqual(5, results.Length);
-            Assert.AreEqual(5, results.Distinct().Count());
-            Assert.IsTrue(results.All(p => p != knownTakenPort));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(results, Has.Length.EqualTo(5));
+                Assert.That(results.Distinct().Count(), Is.EqualTo(5));
+                Assert.That(results.All(p => p != knownTakenPort), Is.True);
+            });
         }
     }
 }
