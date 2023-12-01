@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net472;net6.0</TargetFrameworks>
@@ -7,7 +7,12 @@
     <Description>A package containing the Particular Service Platform for use in samples and tutorials</Description>
     <RootNamespace>Particular</RootNamespace>
     <NoWarn>$(NoWarn);NU5100</NoWarn>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);AddPropsFileToPackage</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
@@ -22,9 +27,11 @@
     <EmbeddedResource Include="configs\*" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
-    <Reference Include="System.Net.Http" />
-  </ItemGroup>
+  <Target Name="AddPropsFileToPackage">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="Particular.PlatformSample.props" PackagePath="build/$(TargetFramework);buildTransitive/$(TargetFramework)" />
+    </ItemGroup>
+  </Target>
 
   <Target Name="WriteServicePulseVersion" BeforeTargets="CoreCompile">
 
@@ -46,5 +53,7 @@
     </ItemGroup>
 
   </Target>
+
+  <Import Project="Particular.PlatformSample.props" />
 
 </Project>
