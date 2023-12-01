@@ -9,10 +9,6 @@
     <ProjectReference Include="..\Particular.PlatformSample\Particular.PlatformSample.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="..\Particular.PlatformSample\platform\**\*" CopyToOutputDirectory="PreserveNewest" Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-
   <Import Project="..\Particular.PlatformSample\Particular.PlatformSample.props" />
 
 </Project>
