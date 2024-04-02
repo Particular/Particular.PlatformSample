@@ -128,11 +128,10 @@
         {
             var assembly = Assembly.GetExecutingAssembly();
 
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
-            using (var reader = new StreamReader(stream))
-            {
-                return reader.ReadToEnd();
-            }
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            using var reader = new StreamReader(stream);
+
+            return reader.ReadToEnd();
         }
 
         public void Dispose()
