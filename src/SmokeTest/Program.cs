@@ -1,6 +1,4 @@
-﻿using System;
-
-try
+﻿try
 {
     await Particular.PlatformLauncher.Launch(showPlatformToolConsoleOutput: false);
 }
