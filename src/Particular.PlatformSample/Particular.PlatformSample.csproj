@@ -6,6 +6,7 @@
     <AssemblyOriginatorKeyFile>..\NServiceBus.snk</AssemblyOriginatorKeyFile>
     <Description>A package containing the Particular Service Platform for use in samples and tutorials</Description>
     <RootNamespace>Particular</RootNamespace>
+    <ServicePulseVersion>1.38.2</ServicePulseVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +16,7 @@
   <ItemGroup>
     <PackageReference Include="Particular.Packaging" Version="4.1.0" PrivateAssets="all" />
     <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="5.1.1" PrivateAssets="none" />
-    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.38.2" PrivateAssets="none" />
+    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="$(ServicePulseVersion)" PrivateAssets="none" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,26 +24,9 @@
     <EmbeddedResource Include="configs\*" />
   </ItemGroup>
 
-  <Target Name="WriteServicePulseVersion" BeforeTargets="CoreCompile">
-
-    <PropertyGroup>
-      <ServicePulseVersion Condition="%(PackageReference.Identity) == 'Particular.PlatformSample.ServicePulse'">%(PackageReference.Version)</ServicePulseVersion>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <AssemblyAttributes Include="ServicePulseVersionAttribute">
-        <_Parameter1>$(ServicePulseVersion)</_Parameter1>
-      </AssemblyAttributes>
-    </ItemGroup>
-
-    <WriteCodeFragment AssemblyAttributes="@(AssemblyAttributes)" Language="C#" OutputDirectory="$(IntermediateOutputPath)" OutputFile="ServicePulseAttribute.g.cs" />
-
-    <ItemGroup>
-      <Compile Include="$(IntermediateOutputPath)\ServicePulseAttribute.g.cs" />
-      <FileWrites Include="$(IntermediateOutputPath)\ServicePulseAttribute.g.cs" />
-    </ItemGroup>
-
-  </Target>
+  <ItemGroup>
+    <AssemblyMetadata Include="ServicePulseVersion" Value="$(ServicePulseVersion)" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Particular.PlatformSample.Tests" Key="$(NServiceBusTestsKey)" />

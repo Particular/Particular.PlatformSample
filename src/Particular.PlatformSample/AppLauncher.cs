@@ -78,7 +78,17 @@
         {
             var config = GetResource("Particular.configs.app.constants.js");
 
-            config = config.Replace("{Version}", typeof(ServicePulse).Assembly.GetCustomAttribute<ServicePulseVersionAttribute>().Version);
+            var attributes = Assembly.GetExecutingAssembly().GetCustomAttributes<AssemblyMetadataAttribute>();
+
+            foreach (var attribute in attributes)
+            {
+                if (attribute.Key == "ServicePulseVersion")
+                {
+                    config = config.Replace("{Version}", attribute.Value);
+                    break;
+                }
+            }
+
             config = config.Replace("{DefaultRoute}", defaultRoute ?? "/dashboard");
             config = config.Replace("{ServiceControlPort}", serviceControlPort.ToString());
             config = config.Replace("{MonitoringPort}", monitoringPort.ToString());
