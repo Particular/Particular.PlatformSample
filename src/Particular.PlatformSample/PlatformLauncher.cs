@@ -58,10 +58,12 @@
             Console.WriteLine("Solution Folder: " + finder.SolutionRoot);
 
             Console.WriteLine("Creating log folders");
+            var ravenLogs = finder.GetDirectory(@".\.logs\raven");
             var monitoringLogs = finder.GetDirectory(@".\.logs\monitoring");
             var controlLogs = finder.GetDirectory(@".\.logs\servicecontrol");
-            var controlDB = finder.GetDirectory(@".\.db");
             var auditLogs = finder.GetDirectory(@".\.logs\servicecontrol-audit");
+
+            var ravenDB = finder.GetDirectory(@".\.db");
             var auditDB = finder.GetDirectory(@".\.audit-db");
 
             Console.WriteLine("Creating transport folder");
@@ -69,8 +71,11 @@
 
             using var launcher = new AppLauncher(showPlatformToolConsoleOutput);
 
+            Console.WriteLine("Launching RavenDB");
+            var serverUri = await launcher.RavenDB(ravenLogs, ravenDB, cancellationToken).ConfigureAwait(false);
+
             Console.WriteLine("Launching ServiceControl");
-            launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath, auditPort);
+            launcher.ServiceControl(controlPort, maintenancePort, controlLogs, transportPath, auditPort, serverUri);
 
             Console.WriteLine("Launching ServiceControl Audit");
             launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, auditDB, transportPath);

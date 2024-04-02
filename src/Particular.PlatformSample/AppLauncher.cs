@@ -6,6 +6,9 @@
     using System.IO;
     using System.Reflection;
     using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Raven.Embedded;
 
     class AppLauncher : IDisposable
     {
@@ -19,7 +22,21 @@
             cleanupActions = new Stack<Action>();
         }
 
-        public void ServiceControl(int port, int maintenancePort, string logPath, string dbPath, string transportPath, int auditPort)
+        public Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
+        {
+            var options = new ServerOptions
+            {
+                LogsPath = logsPath,
+                DataDirectory = dataDirectory
+            };
+
+            EmbeddedServer.Instance.StartServer(options);
+            cleanupActions.Push(EmbeddedServer.Instance.Dispose);
+
+            return EmbeddedServer.Instance.GetServerUriAsync(cancellationToken);
+        }
+
+        public void ServiceControl(int port, int maintenancePort, string logPath, string transportPath, int auditPort, Uri connectionString)
         {
             var config = GetResource("Particular.configs.ServiceControl.exe.config");
 
@@ -27,7 +44,7 @@
             config = config.Replace("{AuditPort}", auditPort.ToString());
             config = config.Replace("{MaintenancePort}", maintenancePort.ToString());
             config = config.Replace("{LogPath}", logPath);
-            config = config.Replace("{DbPath}", dbPath);
+            config = config.Replace("{ConnectionString}", connectionString.ToString());
             config = config.Replace("{TransportPath}", transportPath);
 
             var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\servicecontrol-instance\ServiceControl.exe.config");

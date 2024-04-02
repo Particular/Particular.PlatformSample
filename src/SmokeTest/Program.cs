@@ -1,6 +1,6 @@
 ﻿try
 {
-    await Particular.PlatformLauncher.Launch(showPlatformToolConsoleOutput: false);
+    await Particular.PlatformLauncher.Launch(showPlatformToolConsoleOutput: true);
 }
 catch (Exception e)
 {
