@@ -12,11 +12,9 @@
         const string platformPath = @".\platform";
         readonly bool hideConsoleOutput;
         readonly Stack<Action> cleanupActions;
-        readonly Job platformJob;
 
         public AppLauncher(bool showPlatformToolConsoleOutput)
         {
-            platformJob = new Job("Particular.PlatformSample");
             hideConsoleOutput = !showPlatformToolConsoleOutput;
             cleanupActions = new Stack<Action>();
         }
@@ -36,8 +34,7 @@
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var proc = StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.exe");
-            platformJob.AddProcess(proc);
+            StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.exe");
         }
 
         public void ServiceControlAudit(int port, int maintenancePort, string logPath, string dbPath, string transportPath)
@@ -54,8 +51,7 @@
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var proc = StartProcess(@"servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe");
-            platformJob.AddProcess(proc);
+            StartProcess(@"servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe");
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -70,8 +66,7 @@
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var proc = StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe");
-            platformJob.AddProcess(proc);
+            StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe");
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
@@ -105,7 +100,7 @@
             cleanupActions.Push(sp.Stop);
         }
 
-        Process StartProcess(string relativeExePath, string arguments = null)
+        void StartProcess(string relativeExePath, string arguments = null)
         {
             var fullExePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, platformPath, relativeExePath));
             var workingDirectory = Path.GetDirectoryName(fullExePath);
@@ -130,8 +125,6 @@
                 process.BeginErrorReadLine();
                 process.BeginOutputReadLine();
             }
-
-            return process;
         }
 
         static string GetResource(string resourceName)
@@ -151,8 +144,6 @@
                 var action = cleanupActions.Pop();
                 action();
             }
-
-            platformJob.Dispose();
         }
     }
 
