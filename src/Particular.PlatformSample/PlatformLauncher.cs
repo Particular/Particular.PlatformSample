@@ -2,7 +2,6 @@
 {
     using System;
     using System.Diagnostics;
-    using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -28,15 +27,6 @@
         public static async Task Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null, CancellationToken cancellationToken = default)
         {
             using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Console.WriteLine(
-                    "The Particular Service Platform can currently only be run on the Windows platform.");
-                Console.WriteLine("Press Enter to exit...");
-                Console.ReadLine();
-                return;
-            }
 
             var wait = new ManualResetEvent(false);
 
@@ -80,8 +70,7 @@
             using var launcher = new AppLauncher(showPlatformToolConsoleOutput);
 
             Console.WriteLine("Launching ServiceControl");
-            launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath,
-                auditPort);
+            launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath, auditPort);
 
             Console.WriteLine("Launching ServiceControl Audit");
             launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, auditDB, transportPath);
@@ -93,8 +82,7 @@
             launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
 
             Console.Write("Waiting for ServiceControl to be available");
-            await Network.WaitForHttpOk($"http://localhost:{controlPort}/api",
-                    cancellationToken: tokenSource.Token)
+            await Network.WaitForHttpOk($"http://localhost:{controlPort}/api", cancellationToken: tokenSource.Token)
                 .ConfigureAwait(false);
 
             if (!tokenSource.IsCancellationRequested)
