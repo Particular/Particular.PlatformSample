@@ -30,7 +30,7 @@
             config = config.Replace("{DbPath}", dbPath);
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicecontrol\servicecontrol-instance\ServiceControl.exe.config");
+            var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\servicecontrol-instance\ServiceControl.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
@@ -47,7 +47,7 @@
             config = config.Replace("{DbPath}", dbPath);
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe.config");
+            var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
@@ -62,7 +62,7 @@
             config = config.Replace("{LogPath}", logPath);
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe.config");
+            var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
@@ -88,11 +88,11 @@
             config = config.Replace("{ServiceControlPort}", serviceControlPort.ToString());
             config = config.Replace("{MonitoringPort}", monitoringPort.ToString());
 
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicepulse\js\app.constants.js");
+            var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicepulse\js\app.constants.js");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var webroot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicepulse");
+            var webroot = Path.Combine(AppContext.BaseDirectory, @"platform\servicepulse");
             var sp = new ServicePulse(port, webroot);
 
             sp.Run();
@@ -102,7 +102,7 @@
 
         void StartProcess(string relativeExePath, string arguments = null)
         {
-            var fullExePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, platformPath, relativeExePath));
+            var fullExePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, platformPath, relativeExePath));
             var workingDirectory = Path.GetDirectoryName(fullExePath);
 
             var startInfo = new ProcessStartInfo(fullExePath, arguments)
