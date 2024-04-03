@@ -54,14 +54,14 @@
             StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.exe");
         }
 
-        public void ServiceControlAudit(int port, int maintenancePort, string logPath, string dbPath, string transportPath)
+        public void ServiceControlAudit(int port, int maintenancePort, string logPath, string transportPath, Uri connectionString)
         {
             var config = GetResource("Particular.configs.ServiceControl.Audit.exe.config");
 
             config = config.Replace("{Port}", port.ToString());
             config = config.Replace("{MaintenancePort}", maintenancePort.ToString());
             config = config.Replace("{LogPath}", logPath);
-            config = config.Replace("{DbPath}", dbPath);
+            config = config.Replace("{ConnectionString}", connectionString.ToString());
             config = config.Replace("{TransportPath}", transportPath);
 
             var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe.config");

@@ -64,7 +64,6 @@
             var auditLogs = finder.GetDirectory(@".\.logs\servicecontrol-audit");
 
             var ravenDB = finder.GetDirectory(@".\.db");
-            var auditDB = finder.GetDirectory(@".\.audit-db");
 
             Console.WriteLine("Creating transport folder");
             var transportPath = finder.GetDirectory(@".\.learningtransport");
@@ -78,7 +77,7 @@
             launcher.ServiceControl(controlPort, maintenancePort, controlLogs, transportPath, auditPort, serverUri);
 
             Console.WriteLine("Launching ServiceControl Audit");
-            launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, auditDB, transportPath);
+            launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, transportPath, serverUri);
 
             Console.WriteLine("Launching ServiceControl Monitoring");
             launcher.Monitoring(monitoringPort, monitoringLogs, transportPath);
