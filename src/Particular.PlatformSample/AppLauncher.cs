@@ -51,7 +51,7 @@
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.exe");
+            StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.dll");
         }
 
         public void ServiceControlAudit(int port, int maintenancePort, string logPath, string transportPath, Uri connectionString)
@@ -68,7 +68,7 @@
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            StartProcess(@"servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe");
+            StartProcess(@"servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.dll");
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -83,7 +83,7 @@
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe");
+            StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.dll");
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
@@ -117,12 +117,12 @@
             cleanupActions.Push(sp.Stop);
         }
 
-        void StartProcess(string relativeExePath, string arguments = null)
+        void StartProcess(string assemblyPath)
         {
-            var fullExePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, platformPath, relativeExePath));
-            var workingDirectory = Path.GetDirectoryName(fullExePath);
+            var fullAssemblyPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, platformPath, assemblyPath));
+            var workingDirectory = Path.GetDirectoryName(fullAssemblyPath);
 
-            var startInfo = new ProcessStartInfo(fullExePath, arguments)
+            var startInfo = new ProcessStartInfo("dotnet", fullAssemblyPath)
             {
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = false
@@ -163,6 +163,4 @@
             }
         }
     }
-
-
 }
