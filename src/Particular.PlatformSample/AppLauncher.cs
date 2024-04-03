@@ -24,10 +24,13 @@
 
         public Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
+            var licenseFilePath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\servicecontrol-instance\Persisters\RavenDB\RavenLicense.json");
+
             var options = new ServerOptions
             {
                 LogsPath = logsPath,
-                DataDirectory = dataDirectory
+                DataDirectory = dataDirectory,
+                CommandLineArgs = [$"--License.Path=\"{licenseFilePath}\""]
             };
 
             EmbeddedServer.Instance.StartServer(options);
