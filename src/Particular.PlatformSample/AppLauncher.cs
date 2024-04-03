@@ -12,19 +12,20 @@
 
     class AppLauncher : IDisposable
     {
-        const string platformPath = @".\platform";
+        readonly string platformPath;
         readonly bool hideConsoleOutput;
         readonly Stack<Action> cleanupActions;
 
         public AppLauncher(bool showPlatformToolConsoleOutput)
         {
+            platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
             hideConsoleOutput = !showPlatformToolConsoleOutput;
             cleanupActions = new Stack<Action>();
         }
 
         public Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
-            var licenseFilePath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\servicecontrol-instance\Persisters\RavenDB\RavenLicense.json");
+            var licenseFilePath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "Persisters", "RavenDB", "RavenLicense.json");
 
             var options = new ServerOptions
             {
@@ -50,11 +51,11 @@
             config = config.Replace("{ConnectionString}", connectionString.ToString());
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\servicecontrol-instance\ServiceControl.exe.config");
+            var configPath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.dll");
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"));
         }
 
         public void ServiceControlAudit(int port, int maintenancePort, string logPath, string transportPath, Uri connectionString)
@@ -67,11 +68,11 @@
             config = config.Replace("{ConnectionString}", connectionString.ToString());
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe.config");
+            var configPath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            StartProcess(@"servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.dll");
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"));
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -82,11 +83,11 @@
             config = config.Replace("{LogPath}", logPath);
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe.config");
+            var configPath = Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.dll");
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"));
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
@@ -108,11 +109,11 @@
             config = config.Replace("{ServiceControlPort}", serviceControlPort.ToString());
             config = config.Replace("{MonitoringPort}", monitoringPort.ToString());
 
-            var configPath = Path.Combine(AppContext.BaseDirectory, @"platform\servicepulse\js\app.constants.js");
+            var configPath = Path.Combine(platformPath, "servicepulse", "js", "app.constants.js");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var webroot = Path.Combine(AppContext.BaseDirectory, @"platform\servicepulse");
+            var webroot = Path.Combine(platformPath, "servicepulse");
             var sp = new ServicePulse(port, webroot);
 
             sp.Run();
@@ -122,10 +123,9 @@
 
         void StartProcess(string assemblyPath)
         {
-            var fullAssemblyPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, platformPath, assemblyPath));
-            var workingDirectory = Path.GetDirectoryName(fullAssemblyPath);
+            var workingDirectory = Path.GetDirectoryName(assemblyPath);
 
-            var startInfo = new ProcessStartInfo("dotnet", fullAssemblyPath)
+            var startInfo = new ProcessStartInfo("dotnet", assemblyPath)
             {
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = false

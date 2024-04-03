@@ -2,6 +2,7 @@
 {
     using System;
     using System.Diagnostics;
+    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -58,15 +59,15 @@
             Console.WriteLine("Solution Folder: " + finder.SolutionRoot);
 
             Console.WriteLine("Creating log folders");
-            var ravenLogs = finder.GetDirectory(@".\.logs\raven");
-            var monitoringLogs = finder.GetDirectory(@".\.logs\monitoring");
-            var controlLogs = finder.GetDirectory(@".\.logs\servicecontrol");
-            var auditLogs = finder.GetDirectory(@".\.logs\servicecontrol-audit");
+            var ravenLogs = finder.GetDirectory(Path.Combine(".logs", "raven"));
+            var monitoringLogs = finder.GetDirectory(Path.Combine(".logs", "monitoring"));
+            var controlLogs = finder.GetDirectory(Path.Combine(".logs", "servicecontrol"));
+            var auditLogs = finder.GetDirectory(Path.Combine(".logs", "servicecontrol-audit"));
 
-            var ravenDB = finder.GetDirectory(@".\.db");
+            var ravenDB = finder.GetDirectory(".db");
 
             Console.WriteLine("Creating transport folder");
-            var transportPath = finder.GetDirectory(@".\.learningtransport");
+            var transportPath = finder.GetDirectory(".learningtransport");
 
             using var launcher = new AppLauncher(showPlatformToolConsoleOutput);
 
