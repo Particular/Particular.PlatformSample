@@ -15,9 +15,8 @@
 
   <ItemGroup>
     <PackageReference Include="Particular.Packaging" Version="4.1.0" PrivateAssets="all" />
-    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="5.1.0-alpha.0.157" PrivateAssets="none" />
+    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="5.2.0-alpha.0.185" PrivateAssets="none" />
     <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="$(ServicePulseVersion)" PrivateAssets="none" />
-    <PackageReference Include="RavenDB.Embedded" Version="6.0.101" />
   </ItemGroup>
 
   <ItemGroup>
