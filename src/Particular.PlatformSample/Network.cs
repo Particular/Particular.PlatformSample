@@ -68,9 +68,7 @@
 
                     status = response.StatusCode;
                 }
-#pragma warning disable IDE0083 // Use pattern matching
-                catch (Exception ex) when (!(ex is OperationCanceledException) && !cancellationToken.IsCancellationRequested)
-#pragma warning restore IDE0083 // Use pattern matching
+                catch (Exception ex) when (ex is not OperationCanceledException && !cancellationToken.IsCancellationRequested)
                 {
                     if (ex is WebException wx && wx.Response is HttpWebResponse response)
                     {

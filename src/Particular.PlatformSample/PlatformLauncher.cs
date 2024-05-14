@@ -2,7 +2,7 @@
 {
     using System;
     using System.Diagnostics;
-    using System.Runtime.InteropServices;
+    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -27,98 +27,88 @@
         /// <param name="cancellationToken">Cancellation token</param>
         public static async Task Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null, CancellationToken cancellationToken = default)
         {
-            using (var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+            using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+            var wait = new ManualResetEvent(false);
+
+            Console.CancelKeyPress += (sender, args) =>
             {
+                args.Cancel = true;
+                wait.Set();
+                tokenSource.Cancel();
+            };
 
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    Console.WriteLine(
-                        "The Particular Service Platform can currently only be run on the Windows platform.");
-                    Console.WriteLine("Press Enter to exit...");
-                    Console.ReadLine();
-                    return;
-                }
+            var ports = Network.FindAvailablePorts(PortStartSearch, 6);
 
-                var wait = new ManualResetEvent(false);
+            var controlPort = ports[0];
+            var auditPort = ports[1];
+            var maintenancePort = ports[2];
+            var auditMaintenancePort = ports[3];
+            var monitoringPort = ports[4];
+            var pulsePort = ports[5];
 
-                Console.CancelKeyPress += (sender, args) =>
-                {
-                    args.Cancel = true;
-                    wait.Set();
-                    tokenSource.Cancel();
-                };
+            Console.WriteLine($"Found free port '{controlPort}' for ServiceControl");
+            Console.WriteLine($"Found free port '{auditPort}' for ServiceControl Audit");
+            Console.WriteLine($"Found free port '{maintenancePort}' for ServiceControl Maintenance");
+            Console.WriteLine($"Found free port '{auditMaintenancePort}' for ServiceControl Audit Maintenance");
+            Console.WriteLine($"Found free port '{monitoringPort}' for ServiceControl Monitoring");
+            Console.WriteLine($"Found free port '{pulsePort}' for ServicePulse");
 
-                var ports = Network.FindAvailablePorts(PortStartSearch, 6);
+            var finder = new Finder();
 
-                var controlPort = ports[0];
-                var auditPort = ports[1];
-                var maintenancePort = ports[2];
-                var auditMaintenancePort = ports[3];
-                var monitoringPort = ports[4];
-                var pulsePort = ports[5];
+            Console.WriteLine("Solution Folder: " + finder.SolutionRoot);
 
-                Console.WriteLine($"Found free port '{controlPort}' for ServiceControl");
-                Console.WriteLine($"Found free port '{auditPort}' for ServiceControl Audit");
-                Console.WriteLine($"Found free port '{maintenancePort}' for ServiceControl Maintenance");
-                Console.WriteLine($"Found free port '{auditMaintenancePort}' for ServiceControl Audit Maintenance");
-                Console.WriteLine($"Found free port '{monitoringPort}' for ServiceControl Monitoring");
-                Console.WriteLine($"Found free port '{pulsePort}' for ServicePulse");
+            Console.WriteLine("Creating log folders");
+            var ravenLogs = finder.GetDirectory(Path.Combine(".logs", "raven"));
+            var monitoringLogs = finder.GetDirectory(Path.Combine(".logs", "monitoring"));
+            var controlLogs = finder.GetDirectory(Path.Combine(".logs", "servicecontrol"));
+            var auditLogs = finder.GetDirectory(Path.Combine(".logs", "servicecontrol-audit"));
 
-                var finder = new Finder();
+            var ravenDB = finder.GetDirectory(".db");
 
-                Console.WriteLine("Solution Folder: " + finder.SolutionRoot);
+            Console.WriteLine("Creating transport folder");
+            var transportPath = finder.GetDirectory(".learningtransport");
 
-                Console.WriteLine("Creating log folders");
-                var monitoringLogs = finder.GetDirectory(@".\.logs\monitoring");
-                var controlLogs = finder.GetDirectory(@".\.logs\servicecontrol");
-                var controlDB = finder.GetDirectory(@".\.db");
-                var auditLogs = finder.GetDirectory(@".\.logs\servicecontrol-audit");
-                var auditDB = finder.GetDirectory(@".\.audit-db");
+            using var launcher = new AppLauncher(showPlatformToolConsoleOutput);
 
-                Console.WriteLine("Creating transport folder");
-                var transportPath = finder.GetDirectory(@".\.learningtransport");
+            Console.WriteLine("Launching RavenDB");
+            var serverUri = await launcher.RavenDB(ravenLogs, ravenDB, cancellationToken).ConfigureAwait(false);
 
-                using (var launcher = new AppLauncher(showPlatformToolConsoleOutput))
-                {
-                    Console.WriteLine("Launching ServiceControl");
-                    launcher.ServiceControl(controlPort, maintenancePort, controlLogs, controlDB, transportPath,
-                        auditPort);
+            Console.WriteLine("Launching ServiceControl");
+            launcher.ServiceControl(controlPort, maintenancePort, controlLogs, transportPath, auditPort, serverUri);
 
-                    Console.WriteLine("Launching ServiceControl Audit");
-                    launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, auditDB, transportPath);
+            Console.WriteLine("Launching ServiceControl Audit");
+            launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, transportPath, serverUri);
 
-                    Console.WriteLine("Launching ServiceControl Monitoring");
-                    launcher.Monitoring(monitoringPort, monitoringLogs, transportPath);
+            Console.WriteLine("Launching ServiceControl Monitoring");
+            launcher.Monitoring(monitoringPort, monitoringLogs, transportPath);
 
-                    Console.WriteLine("Launching ServicePulse");
-                    launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
+            Console.WriteLine("Launching ServicePulse");
+            launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
 
-                    Console.Write("Waiting for ServiceControl to be available");
-                    await Network.WaitForHttpOk($"http://localhost:{controlPort}/api",
-                            cancellationToken: tokenSource.Token)
-                        .ConfigureAwait(false);
+            Console.Write("Waiting for ServiceControl to be available");
+            await Network.WaitForHttpOk($"http://localhost:{controlPort}/api", cancellationToken: tokenSource.Token)
+                .ConfigureAwait(false);
 
-                    if (!tokenSource.IsCancellationRequested)
-                    {
-                        var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
-                        Console.WriteLine();
-                        Console.WriteLine($"ServiceControl API can now be accessed via: {serviceControlApiUrl}");
+            if (!tokenSource.IsCancellationRequested)
+            {
+                var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
+                Console.WriteLine();
+                Console.WriteLine($"ServiceControl API can now be accessed via: {serviceControlApiUrl}");
 
-                        var servicePulseUrl = $"http://localhost:{pulsePort}";
-                        Console.WriteLine();
-                        Console.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
-                        Console.WriteLine("Attempting to launch ServicePulse in a browser window...");
-                        Process.Start(new ProcessStartInfo(servicePulseUrl) { UseShellExecute = true });
+                var servicePulseUrl = $"http://localhost:{pulsePort}";
+                Console.WriteLine();
+                Console.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
+                Console.WriteLine("Attempting to launch ServicePulse in a browser window...");
+                Process.Start(new ProcessStartInfo(servicePulseUrl) { UseShellExecute = true });
 
-                        Console.WriteLine();
-                        Console.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
-                        wait.WaitOne();
-                    }
-
-                    Console.WriteLine();
-                    Console.WriteLine("Waiting for external processes to shut down...");
-                }
+                Console.WriteLine();
+                Console.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
+                wait.WaitOne();
             }
+
+            Console.WriteLine();
+            Console.WriteLine("Waiting for external processes to shut down...");
         }
     }
 }

@@ -10,7 +10,7 @@
 
         public Finder()
         {
-            var directory = AppDomain.CurrentDomain.BaseDirectory;
+            var directory = AppContext.BaseDirectory;
 
             while (true)
             {

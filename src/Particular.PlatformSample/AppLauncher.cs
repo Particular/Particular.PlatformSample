@@ -6,22 +6,41 @@
     using System.IO;
     using System.Reflection;
     using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Raven.Embedded;
 
     class AppLauncher : IDisposable
     {
-        const string platformPath = @".\platform";
+        readonly string platformPath;
         readonly bool hideConsoleOutput;
         readonly Stack<Action> cleanupActions;
-        readonly Job platformJob;
 
         public AppLauncher(bool showPlatformToolConsoleOutput)
         {
-            platformJob = new Job("Particular.PlatformSample");
+            platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
             hideConsoleOutput = !showPlatformToolConsoleOutput;
             cleanupActions = new Stack<Action>();
         }
 
-        public void ServiceControl(int port, int maintenancePort, string logPath, string dbPath, string transportPath, int auditPort)
+        public Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
+        {
+            var licenseFilePath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "Persisters", "RavenDB", "RavenLicense.json");
+
+            var options = new ServerOptions
+            {
+                LogsPath = logsPath,
+                DataDirectory = dataDirectory,
+                CommandLineArgs = [$"--License.Path=\"{licenseFilePath}\""]
+            };
+
+            EmbeddedServer.Instance.StartServer(options);
+            cleanupActions.Push(EmbeddedServer.Instance.Dispose);
+
+            return EmbeddedServer.Instance.GetServerUriAsync(cancellationToken);
+        }
+
+        public void ServiceControl(int port, int maintenancePort, string logPath, string transportPath, int auditPort, Uri connectionString)
         {
             var config = GetResource("Particular.configs.ServiceControl.exe.config");
 
@@ -29,33 +48,31 @@
             config = config.Replace("{AuditPort}", auditPort.ToString());
             config = config.Replace("{MaintenancePort}", maintenancePort.ToString());
             config = config.Replace("{LogPath}", logPath);
-            config = config.Replace("{DbPath}", dbPath);
+            config = config.Replace("{ConnectionString}", connectionString.ToString());
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicecontrol\servicecontrol-instance\ServiceControl.exe.config");
+            var configPath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var proc = StartProcess(@"servicecontrol\servicecontrol-instance\ServiceControl.exe");
-            platformJob.AddProcess(proc);
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"));
         }
 
-        public void ServiceControlAudit(int port, int maintenancePort, string logPath, string dbPath, string transportPath)
+        public void ServiceControlAudit(int port, int maintenancePort, string logPath, string transportPath, Uri connectionString)
         {
             var config = GetResource("Particular.configs.ServiceControl.Audit.exe.config");
 
             config = config.Replace("{Port}", port.ToString());
             config = config.Replace("{MaintenancePort}", maintenancePort.ToString());
             config = config.Replace("{LogPath}", logPath);
-            config = config.Replace("{DbPath}", dbPath);
+            config = config.Replace("{ConnectionString}", connectionString.ToString());
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe.config");
+            var configPath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var proc = StartProcess(@"servicecontrol\servicecontrol-audit-instance\ServiceControl.Audit.exe");
-            platformJob.AddProcess(proc);
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"));
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -66,28 +83,37 @@
             config = config.Replace("{LogPath}", logPath);
             config = config.Replace("{TransportPath}", transportPath);
 
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe.config");
+            var configPath = Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var proc = StartProcess(@"servicecontrol\monitoring-instance\ServiceControl.Monitoring.exe");
-            platformJob.AddProcess(proc);
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"));
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
         {
             var config = GetResource("Particular.configs.app.constants.js");
 
-            config = config.Replace("{Version}", typeof(ServicePulse).Assembly.GetCustomAttribute<ServicePulseVersionAttribute>().Version);
+            var attributes = Assembly.GetExecutingAssembly().GetCustomAttributes<AssemblyMetadataAttribute>();
+
+            foreach (var attribute in attributes)
+            {
+                if (attribute.Key == "ServicePulseVersion")
+                {
+                    config = config.Replace("{Version}", attribute.Value);
+                    break;
+                }
+            }
+
             config = config.Replace("{DefaultRoute}", defaultRoute ?? "/dashboard");
             config = config.Replace("{ServiceControlPort}", serviceControlPort.ToString());
             config = config.Replace("{MonitoringPort}", monitoringPort.ToString());
 
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicepulse\js\app.constants.js");
+            var configPath = Path.Combine(platformPath, "servicepulse", "js", "app.constants.js");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
 
-            var webroot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"platform\servicepulse");
+            var webroot = Path.Combine(platformPath, "servicepulse");
             var sp = new ServicePulse(port, webroot);
 
             sp.Run();
@@ -95,12 +121,11 @@
             cleanupActions.Push(sp.Stop);
         }
 
-        Process StartProcess(string relativeExePath, string arguments = null)
+        void StartProcess(string assemblyPath)
         {
-            var fullExePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, platformPath, relativeExePath));
-            var workingDirectory = Path.GetDirectoryName(fullExePath);
+            var workingDirectory = Path.GetDirectoryName(assemblyPath);
 
-            var startInfo = new ProcessStartInfo(fullExePath, arguments)
+            var startInfo = new ProcessStartInfo("dotnet", assemblyPath)
             {
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = false
@@ -120,19 +145,16 @@
                 process.BeginErrorReadLine();
                 process.BeginOutputReadLine();
             }
-
-            return process;
         }
 
         static string GetResource(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
 
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
-            using (var reader = new StreamReader(stream))
-            {
-                return reader.ReadToEnd();
-            }
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            using var reader = new StreamReader(stream);
+
+            return reader.ReadToEnd();
         }
 
         public void Dispose()
@@ -142,10 +164,6 @@
                 var action = cleanupActions.Pop();
                 action();
             }
-
-            platformJob.Dispose();
         }
     }
-
-
 }
