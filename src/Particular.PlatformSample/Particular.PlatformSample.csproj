@@ -6,7 +6,7 @@
     <AssemblyOriginatorKeyFile>..\NServiceBus.snk</AssemblyOriginatorKeyFile>
     <Description>A package containing the Particular Service Platform for use in samples and tutorials</Description>
     <RootNamespace>Particular</RootNamespace>
-    <ServicePulseVersion>1.38.3</ServicePulseVersion>
+    <ServicePulseVersion>1.39.0</ServicePulseVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Particular.Packaging" Version="4.1.0" PrivateAssets="all" />
-    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="5.2.4" PrivateAssets="none" />
+    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="5.3.0" PrivateAssets="none" />
     <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="$(ServicePulseVersion)" PrivateAssets="none" />
   </ItemGroup>
 
