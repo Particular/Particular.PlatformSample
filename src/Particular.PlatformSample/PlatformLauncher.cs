@@ -23,7 +23,7 @@
         /// message transport.
         /// </summary>
         /// <param name="showPlatformToolConsoleOutput">By default, the output of each application is suppressed. Set to true to show tool output in the console window.</param>
-        /// <param name="servicePulseDefaultRoute">By default, the ServicePulse dashboard (/dashboard) is displayed. Set the default route to any valid ServicePulse route such as (/monitored_endpoints).</param>
+        /// <param name="servicePulseDefaultRoute">By default, the ServicePulse dashboard (/dashboard) is displayed. Set the default route to any valid ServicePulse route such as (/monitoring).</param>
         /// <param name="cancellationToken">Cancellation token</param>
         public static async Task Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null, CancellationToken cancellationToken = default)
         {

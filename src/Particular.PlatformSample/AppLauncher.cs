@@ -92,36 +92,18 @@
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
         {
-            var config = GetResource("Particular.configs.app.constants.js");
-
-            var attributes = Assembly.GetExecutingAssembly().GetCustomAttributes<AssemblyMetadataAttribute>();
-
-            foreach (var attribute in attributes)
+            var environmentVariables = new Dictionary<string, string>
             {
-                if (attribute.Key == "ServicePulseVersion")
-                {
-                    config = config.Replace("{Version}", attribute.Value);
-                    break;
-                }
-            }
+                { "ASPNETCORE_HTTP_PORTS", port.ToString() },
+                { "SERVICECONTROL_URL", $"http://localhost:{serviceControlPort}" },
+                { "MONITORING_URL", $"http://localhost:{monitoringPort}" },
+                { "DEFAULT_ROUTE", defaultRoute }
+            };
 
-            config = config.Replace("{DefaultRoute}", defaultRoute ?? "/dashboard");
-            config = config.Replace("{ServiceControlPort}", serviceControlPort.ToString());
-            config = config.Replace("{MonitoringPort}", monitoringPort.ToString());
-
-            var configPath = Path.Combine(platformPath, "servicepulse", "js", "app.constants.js");
-
-            File.WriteAllText(configPath, config, Encoding.UTF8);
-
-            var webroot = Path.Combine(platformPath, "servicepulse");
-            var sp = new ServicePulse(port, webroot);
-
-            sp.Run();
-
-            cleanupActions.Push(sp.Stop);
+            StartProcess(Path.Combine(platformPath, "servicepulse", "ServicePulse.dll"), environmentVariables);
         }
 
-        void StartProcess(string assemblyPath)
+        void StartProcess(string assemblyPath, Dictionary<string, string> environmentVariables = null)
         {
             var workingDirectory = Path.GetDirectoryName(assemblyPath);
 
@@ -130,6 +112,14 @@
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = false
             };
+
+            if (environmentVariables is not null)
+            {
+                foreach (var item in environmentVariables)
+                {
+                    startInfo.EnvironmentVariables.Add(item.Key, item.Value);
+                }
+            }
 
             if (hideConsoleOutput)
             {
