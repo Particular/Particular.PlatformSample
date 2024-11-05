@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Particular.Packaging" Version="4.1.0" PrivateAssets="all" />
+    <PackageReference Include="Particular.Packaging" Version="4.2.0" PrivateAssets="all" />
     <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="6.0.0" PrivateAssets="none" />
     <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.44.1" PrivateAssets="none" />
   </ItemGroup>
