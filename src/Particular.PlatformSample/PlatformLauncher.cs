@@ -51,6 +51,8 @@
             var monitoringPort = ports[4];
             var pulsePort = ports[5];
 
+            TestPortsInternal.ServicePulse = pulsePort;
+
             Console.WriteLine($"Found free port '{controlPort}' for ServiceControl");
             Console.WriteLine($"Found free port '{auditPort}' for ServiceControl Audit");
             Console.WriteLine($"Found free port '{maintenancePort}' for ServiceControl Maintenance");
