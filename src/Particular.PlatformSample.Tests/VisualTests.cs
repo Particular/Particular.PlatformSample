@@ -1,6 +1,7 @@
 namespace Particular.PlatformSample.Tests;
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +36,17 @@ public class VisualTests
 
         await Network.WaitForHttpOk($"http://localhost:{TestPortsInternal.ServicePulse}", cancellationToken: timeoutTokenSource.Token);
 
-        driver = new ChromeDriver();
+        var chromeOpts = new ChromeOptions();
+        chromeOpts.AddArgument("--headless=new");
+        if (Environment.GetEnvironmentVariable("CI") == "true")
+        {
+            var runnerTemp = Environment.GetEnvironmentVariable("RUNNER_TEMP");
+            var dataDir = Path.Combine(runnerTemp, "browser-testing");
+            Directory.CreateDirectory(dataDir);
+            chromeOpts.AddArgument($"--user-data-dir={dataDir}");
+        }
+
+        driver = new ChromeDriver(chromeOpts);
     }
 
     [OneTimeTearDown]
