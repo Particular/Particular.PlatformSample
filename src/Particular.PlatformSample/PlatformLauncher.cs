@@ -31,10 +31,14 @@
 
             var wait = new ManualResetEvent(false);
 
+            tokenSource.Token.Register(() =>
+            {
+                wait.Set();
+            });
+
             Console.CancelKeyPress += (sender, args) =>
             {
                 args.Cancel = true;
-                wait.Set();
                 tokenSource.Cancel();
             };
 
