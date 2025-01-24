@@ -33,8 +33,5 @@ jobs:
           name: nugets
           path: nugets/*
           retention-days: 1
-      - name: Deploy
-        # Does not follow standard practice of targeting explicit versions because configuration is tightly coupled to Octopus Deploy configuration
-        uses: Particular/push-octopus-package-action@main
-        with:
-          octopus-deploy-api-key: ${{ secrets.OCTOPUS_DEPLOY_API_KEY }}
+      - name: Deploy to NuGet
+        run: dotnet nuget push nugets/*.nupkg --api-key ${{ secrets.NUGET_PUBLISH_API_KEY }} --source https://api.nuget.org/v3/index.json
