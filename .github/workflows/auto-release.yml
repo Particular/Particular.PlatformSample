@@ -1,0 +1,34 @@
+name: Automatic Release
+on:
+  pull_request:
+    types: closed
+defaults:
+  run:
+    shell: pwsh
+env:
+  GH_TOKEN: ${{ github.token }}
+jobs:
+  auto-release:
+    name: Automatic Release
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout required for GitHub CLI to work
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Get Dependabot metadata
+        id: dependabot
+        if: ${{ github.actor == 'dependabot[bot]' }}
+        uses: dependabot/fetch-metadata@v2.2.0
+      - name: Evaluate metadata
+        if: ${{ steps.dependabot.outputs.target-branch == github.event.repository.default_branch && contains(steps.dependabot.outputs.dependency-names, 'Particular.PlatformSample.') }}
+        run: |
+          echo "Need to release, in theory"
+          $tags = gh api /repos/${{ github.repository }}/tags | ConvertFrom-Json
+          $latest = [Version]($tags | Where-Object name -match '^\d+\.\d+\.\d+$' | Sort-Object -Descending {[Version]$_.name} | Select-Object name)[0].name
+          $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
+          echo "Next release should be $nextMinor"
+          # gh release create $nextMinor --latest --notes "Automatically generated due to updates in ${{ steps.dependabot.outputs.dependency-names }}"
