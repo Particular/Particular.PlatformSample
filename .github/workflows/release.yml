@@ -37,4 +37,4 @@ jobs:
           path: nugets/*
           retention-days: 1
       - name: Deploy to NuGet
-        run: dotnet nuget push nugets/*.nupkg --api-key ${{ secrets.NUGET_PUBLISH_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push nugets/*.nupkg --api-key ${{ secrets.NUGET_PUBLISH_API_KEY }} --source ${{ vars.NUGET_API_URL }}
