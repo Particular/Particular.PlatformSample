@@ -31,10 +31,14 @@
 
             var wait = new ManualResetEvent(false);
 
+            tokenSource.Token.Register(() =>
+            {
+                wait.Set();
+            });
+
             Console.CancelKeyPress += (sender, args) =>
             {
                 args.Cancel = true;
-                wait.Set();
                 tokenSource.Cancel();
             };
 
@@ -46,6 +50,8 @@
             var auditMaintenancePort = ports[3];
             var monitoringPort = ports[4];
             var pulsePort = ports[5];
+
+            TestPortsInternal.ServicePulse = pulsePort;
 
             Console.WriteLine($"Found free port '{controlPort}' for ServiceControl");
             Console.WriteLine($"Found free port '{auditPort}' for ServiceControl Audit");
