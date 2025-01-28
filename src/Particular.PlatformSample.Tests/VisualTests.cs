@@ -31,17 +31,15 @@ public class VisualTests
 
         while (TestPortsInternal.ServicePulse == 0)
         {
-            TestContext.Out.WriteLine("Waiting 1s for ServicePulse port to be available");
             await Task.Delay(1000, closePlatformTokenSource.Token);
         }
 
-        TestContext.Out.WriteLine("Waiting for ServicePulse to respond over HTTP");
         await Network.WaitForHttpOk($"http://localhost:{TestPortsInternal.ServicePulse}", cancellationToken: timeoutTokenSource.Token);
 
-        TestContext.Out.WriteLine("Initializing Chrome Driver");
         var chromeOpts = new ChromeOptions();
         chromeOpts.AddArgument("--headless=new");
-        chromeOpts.AddArgument("no-sandbox");
+        chromeOpts.AddArgument("--no-sandbox");
+        chromeOpts.AddArgument("--disable-dev-shm-usage");
         if (Environment.GetEnvironmentVariable("CI") == "true")
         {
             var runnerTemp = Environment.GetEnvironmentVariable("RUNNER_TEMP");
