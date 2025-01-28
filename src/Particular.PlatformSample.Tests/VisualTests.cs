@@ -43,6 +43,12 @@ public class VisualTests
         chromeOpts.AddArgument("--disable-extensions");
         chromeOpts.AddArgument("--no-sandbox");
         chromeOpts.AddArgument("--disable-dev-shm-usage");
+        chromeOpts.AddArgument("--disk-cache-size=1");
+        chromeOpts.AddArgument("--media-cache-size=1");
+        chromeOpts.AddArgument("--incognito");
+        chromeOpts.AddArgument("--remote-debugging-port=9222");
+        chromeOpts.AddArgument("--aggressive-cache-discard");
+
         if (Environment.GetEnvironmentVariable("CI") == "true")
         {
             var runnerTemp = Environment.GetEnvironmentVariable("RUNNER_TEMP");
@@ -51,7 +57,8 @@ public class VisualTests
             chromeOpts.AddArgument($"--user-data-dir={dataDir}");
         }
 
-        driver = new ChromeDriver(chromeOpts);
+        var chromeService = ChromeDriverService.CreateDefaultService();
+        driver = new ChromeDriver(chromeService, chromeOpts, TimeSpan.FromSeconds(90));
     }
 
     [OneTimeTearDown]
