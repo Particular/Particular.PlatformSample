@@ -31,12 +31,14 @@ public class VisualTests
 
         while (TestPortsInternal.ServicePulse == 0)
         {
-            Console.WriteLine("Waiting 1s for ServicePulse port to be avialable");
+            TestContext.Out.WriteLine("Waiting 1s for ServicePulse port to be available");
             await Task.Delay(1000, closePlatformTokenSource.Token);
         }
 
+        TestContext.Out.WriteLine("Waiting for ServicePulse to respond over HTTP");
         await Network.WaitForHttpOk($"http://localhost:{TestPortsInternal.ServicePulse}", cancellationToken: timeoutTokenSource.Token);
 
+        TestContext.Out.WriteLine("Initializing Chrome Driver");
         var chromeOpts = new ChromeOptions();
         chromeOpts.AddArgument("--headless=new");
         chromeOpts.AddArgument("no-sandbox");
@@ -54,6 +56,7 @@ public class VisualTests
     [OneTimeTearDown]
     public async Task TearDown()
     {
+        TestContext.Out.WriteLine("Cleaning up Chrome Driver");
         await closePlatformTokenSource.CancelAsync();
         await launcherTask;
         closePlatformTokenSource.Dispose();
