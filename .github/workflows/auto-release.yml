@@ -32,3 +32,23 @@ jobs:
           $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
           echo "Next release should be $nextMinor"
           # gh release create $nextMinor --latest --notes "Automatically generated due to updates in ${{ steps.dependabot.outputs.dependency-names }}"
+      - name: Alternative using git diff
+        run: |
+          # Get the diff of the component csproj file between the base and head of the just-merged PR
+          $diff = $(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha src/Particular.PlatformSample/Particular.PlatformSample.csproj }})
+          # Grep search for lines that show an addition contianing ServiceControl/ServicePulse
+          $updates = $diff | grep -E '^\+\s+<PackageReference Include="Particular\.PlatformSample\.(ServiceControl|ServicePulse)"'
+          # Get number of lines
+          $lines = ($updates | Measure-Object -Line).Lines
+
+          if ($lines -eq 0) {
+            echo "Nothing to release"
+          } else {
+            echo "Need to release, in theory"
+            $tags = gh api /repos/${{ github.repository }}/tags | ConvertFrom-Json
+            $latest = [Version]($tags | Where-Object name -match '^\d+\.\d+\.\d+$' | Sort-Object -Descending {[Version]$_.name} | Select-Object name)[0].name
+            $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
+            echo "Next release should be $nextMinor"
+            # gh release create $nextMinor --latest --notes "Automatically generated due to updates in ${{ steps.dependabot.outputs.dependency-names }}"
+          }
+          
