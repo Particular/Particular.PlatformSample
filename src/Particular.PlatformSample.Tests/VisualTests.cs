@@ -38,6 +38,9 @@ public class VisualTests
 
         var chromeOpts = new ChromeOptions();
         chromeOpts.AddArgument("--headless=new");
+        chromeOpts.AddArgument("--disable-gpu");
+        chromeOpts.AddArgument("--ignore-certificate-errors");
+        chromeOpts.AddArgument("--disable-extensions");
         chromeOpts.AddArgument("--no-sandbox");
         chromeOpts.AddArgument("--disable-dev-shm-usage");
         if (Environment.GetEnvironmentVariable("CI") == "true")
@@ -54,7 +57,6 @@ public class VisualTests
     [OneTimeTearDown]
     public async Task TearDown()
     {
-        TestContext.Out.WriteLine("Cleaning up Chrome Driver");
         await closePlatformTokenSource.CancelAsync();
         await launcherTask;
         closePlatformTokenSource.Dispose();
