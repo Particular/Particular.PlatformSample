@@ -46,12 +46,14 @@ jobs:
 
           if ($lines -eq 0) {
             echo "Nothing to release"
-          } else {
-            echo "Need to release, in theory"
-            $tags = gh api /repos/${{ github.repository }}/tags | ConvertFrom-Json
-            $latest = [Version]($tags | Where-Object name -match '^\d+\.\d+\.\d+$' | Sort-Object -Descending {[Version]$_.name} | Select-Object name)[0].name
-            $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
-            echo "Next release should be $nextMinor"
-            # gh release create $nextMinor --latest --notes "Automatically generated due to updates in ${{ steps.dependabot.outputs.dependency-names }}"
+            exit 0
           }
+          
+          echo "Need to release, in theory"
+          $tags = gh api /repos/${{ github.repository }}/tags | ConvertFrom-Json
+          $latest = [Version]($tags | Where-Object name -match '^\d+\.\d+\.\d+$' | Sort-Object -Descending {[Version]$_.name} | Select-Object name)[0].name
+          $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
+          echo "Next release should be $nextMinor"
+          # gh release create $nextMinor --latest --notes "Automatically generated due to updates in ${{ steps.dependabot.outputs.dependency-names }}"
+          exit 0
           
