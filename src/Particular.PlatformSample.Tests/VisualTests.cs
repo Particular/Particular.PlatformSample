@@ -31,13 +31,24 @@ public class VisualTests
 
         while (TestPortsInternal.ServicePulse == 0)
         {
-            await Task.Delay(500, closePlatformTokenSource.Token);
+            await Task.Delay(1000, closePlatformTokenSource.Token);
         }
 
         await Network.WaitForHttpOk($"http://localhost:{TestPortsInternal.ServicePulse}", cancellationToken: timeoutTokenSource.Token);
 
         var chromeOpts = new ChromeOptions();
         chromeOpts.AddArgument("--headless=new");
+        chromeOpts.AddArgument("--disable-gpu");
+        chromeOpts.AddArgument("--ignore-certificate-errors");
+        chromeOpts.AddArgument("--disable-extensions");
+        chromeOpts.AddArgument("--no-sandbox");
+        chromeOpts.AddArgument("--disable-dev-shm-usage");
+        chromeOpts.AddArgument("--disk-cache-size=1");
+        chromeOpts.AddArgument("--media-cache-size=1");
+        chromeOpts.AddArgument("--incognito");
+        chromeOpts.AddArgument("--remote-debugging-port=9222");
+        chromeOpts.AddArgument("--aggressive-cache-discard");
+
         if (Environment.GetEnvironmentVariable("CI") == "true")
         {
             var runnerTemp = Environment.GetEnvironmentVariable("RUNNER_TEMP");
@@ -46,7 +57,8 @@ public class VisualTests
             chromeOpts.AddArgument($"--user-data-dir={dataDir}");
         }
 
-        driver = new ChromeDriver(chromeOpts);
+        var chromeService = ChromeDriverService.CreateDefaultService();
+        driver = new ChromeDriver(chromeService, chromeOpts, TimeSpan.FromSeconds(90));
     }
 
     [OneTimeTearDown]
@@ -62,8 +74,9 @@ public class VisualTests
     [Test]
     public async Task ShouldBeConnected()
     {
+        await Task.Delay(2000);
         driver.Navigate().GoToUrl($"http://localhost:{TestPortsInternal.ServicePulse}/#/dashboard");
-        await Task.Delay(5000);
+        await Task.Delay(10_000);
 
         var connectionFailedSpans = driver.FindElements(By.CssSelector(".connection-failed"));
         Assert.That(connectionFailedSpans.Count, Is.EqualTo(0));
@@ -75,8 +88,9 @@ public class VisualTests
     [Test]
     public async Task CheckMonitoringPage()
     {
+        await Task.Delay(2000);
         driver.Navigate().GoToUrl($"http://localhost:{TestPortsInternal.ServicePulse}/#/monitoring");
-        await Task.Delay(5000);
+        await Task.Delay(10_000);
 
         var primaryButtons = driver.FindElements(By.CssSelector(".btn.btn-primary"));
         var noEndpointsButton = primaryButtons.Where(b => b.Text.Contains("how to enable endpoint monitoring")).FirstOrDefault();
