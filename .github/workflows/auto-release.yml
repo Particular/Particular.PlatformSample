@@ -35,7 +35,7 @@ jobs:
       - name: Alternative using git diff
         run: |
           # Get the diff of the component csproj file between the base and head of the just-merged PR
-          $diff = $(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} src/Particular.PlatformSample/Particular.PlatformSample.csproj )
+          $diff = $(git diff ${{ github.event.pull_request.base.sha }} HEAD src/Particular.PlatformSample/Particular.PlatformSample.csproj )
           # Grep search for lines that show an addition contianing ServiceControl/ServicePulse
           $updates = $diff | grep -E '^\+\s+<PackageReference Include="Particular\.PlatformSample\.(ServiceControl|ServicePulse)"'
           # Get number of lines
