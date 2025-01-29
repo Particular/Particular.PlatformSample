@@ -18,29 +18,18 @@ jobs:
         with:
           # Need history for git diff to work
           fetch-depth: 0
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      - name: Get Dependabot metadata
-        id: dependabot
-        if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
-        uses: dependabot/fetch-metadata@v2.3.0
-      - name: Evaluate metadata
-        if: ${{ steps.dependabot.outputs.target-branch == github.event.repository.default_branch && contains(steps.dependabot.outputs.dependency-names, 'Particular.PlatformSample.') }}
+      - name: Determine if auto-release is necessary
         run: |
-          echo "Need to release, in theory"
-          $tags = gh api /repos/${{ github.repository }}/tags | ConvertFrom-Json
-          $latest = [Version]($tags | Where-Object name -match '^\d+\.\d+\.\d+$' | Sort-Object -Descending {[Version]$_.name} | Select-Object name)[0].name
-          $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
-          echo "Next release should be $nextMinor"
-          # gh release create $nextMinor --latest --notes "Automatically generated due to updates in ${{ steps.dependabot.outputs.dependency-names }}"
-      - name: Alternative using git diff
-        run: |
+          # Script checks the diff of src/Particular.PlatformSample/Particular.PlatformSample.csproj in the just-merged PR, and invokes a release of the next minor if ServiceControl/ServicePulse changes
+        
           # Get the diff of the component csproj file between the base and head of the just-merged PR
           $diff = $(git diff ${{ github.event.pull_request.base.sha }} HEAD src/Particular.PlatformSample/Particular.PlatformSample.csproj )
+          
           # Grep search for lines that show an addition contianing ServiceControl/ServicePulse
           $updates = $diff | grep -E '^\+\s+<PackageReference Include="Particular\.PlatformSample\.(ServiceControl|ServicePulse)"'
+          echo "Result of search for ServiceControl/ServicePulse updates in PR diff"
+          echo $updates
+          
           # Get number of lines
           $lines = ($updates | Measure-Object -Line).Lines
 
@@ -49,11 +38,13 @@ jobs:
             exit 0
           }
           
-          echo "Need to release, in theory"
+          echo "Change to ServiceControl/ServicePulse detected, need to release"
           $tags = gh api /repos/${{ github.repository }}/tags | ConvertFrom-Json
           $latest = [Version]($tags | Where-Object name -match '^\d+\.\d+\.\d+$' | Sort-Object -Descending {[Version]$_.name} | Select-Object name)[0].name
           $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
-          echo "Next release should be $nextMinor"
-          # gh release create $nextMinor --latest --notes "Automatically generated due to updates in ${{ steps.dependabot.outputs.dependency-names }}"
+          echo "Latest release is $latest, next release should be $nextMinor"
+          echo "Triggering release of $nextMinor using GitHub CLI"
+          gh release create $nextMinor --latest --notes "Automatically generated due to updates in ServiceControl/ServicePulse"
+          echo "Release triggered, complete"
           exit 0
           
