@@ -5,6 +5,8 @@ on:
 defaults:
   run:
     shell: pwsh
+permissions:
+  contents: write
 env:
   GH_TOKEN: ${{ github.token }}
 jobs:
