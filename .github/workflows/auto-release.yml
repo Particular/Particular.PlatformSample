@@ -45,8 +45,10 @@ jobs:
           $latest = [Version]($tags | Where-Object name -match '^\d+\.\d+\.\d+$' | Sort-Object -Descending {[Version]$_.name} | Select-Object name)[0].name
           $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
           echo "Latest release is $latest, next release should be $nextMinor"
-          echo "Triggering release of $nextMinor using GitHub CLI"
-          gh release create $nextMinor --latest --notes "Automatically generated due to updates in ServiceControl/ServicePulse"
+          echo "Tagging release of $nextMinor"
+          git tag $nextMinor
+          echo "Pushing tags"
+          git push --tags
           echo "Release triggered, complete"
           exit 0
           
