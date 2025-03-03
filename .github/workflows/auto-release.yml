@@ -5,10 +5,9 @@ on:
 defaults:
   run:
     shell: pwsh
-permissions:
-  contents: write
 env:
-  GH_TOKEN: ${{ github.token }}
+  # Because actions using `github.token` cannot trigger other workflows to occur
+  GH_TOKEN: ${{ secrets.PARTICULARBOT_GITHUB_TOKEN }}
 jobs:
   auto-release:
     name: Automatic Release
