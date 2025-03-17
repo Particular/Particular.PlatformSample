@@ -11,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Particular.Packaging" Version="4.2.2" PrivateAssets="All" />
     <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="6.4.0" PrivateAssets="None" AutomaticVersionRange="false" />
-    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.45.1" PrivateAssets="None" AutomaticVersionRange="false" />
+    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="1.45.2" PrivateAssets="None" AutomaticVersionRange="false" />
   </ItemGroup>
 
   <ItemGroup>
