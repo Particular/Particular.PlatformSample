@@ -39,7 +39,14 @@
             Console.CancelKeyPress += (sender, args) =>
             {
                 args.Cancel = true;
-                tokenSource.Cancel();
+                try
+                {
+                    tokenSource.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // ignore
+                }
             };
 
             var ports = Network.FindAvailablePorts(PortStartSearch, 6);
