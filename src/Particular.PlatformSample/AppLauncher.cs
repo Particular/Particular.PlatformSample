@@ -10,18 +10,11 @@
     using System.Threading.Tasks;
     using Raven.Embedded;
 
-    class AppLauncher : IDisposable
+    class AppLauncher(bool showPlatformToolConsoleOutput) : IDisposable
     {
-        readonly string platformPath;
-        readonly bool hideConsoleOutput;
-        readonly Stack<Action> cleanupActions;
-
-        public AppLauncher(bool showPlatformToolConsoleOutput)
-        {
-            platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
-            hideConsoleOutput = !showPlatformToolConsoleOutput;
-            cleanupActions = new Stack<Action>();
-        }
+        readonly string platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
+        readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
+        readonly Stack<Action> cleanupActions = new();
 
         public Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
@@ -105,7 +98,7 @@
 
         void StartProcess(string assemblyPath, Dictionary<string, string> environmentVariables = null)
         {
-            var workingDirectory = Path.GetDirectoryName(assemblyPath);
+            var workingDirectory = Path.GetDirectoryName(assemblyPath)!;
 
             var startInfo = new ProcessStartInfo("dotnet", assemblyPath)
             {
