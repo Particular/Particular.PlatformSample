@@ -10,17 +10,17 @@
     using System.Threading.Tasks;
     using Raven.Embedded;
 
-    class AppLauncher : IDisposable
+    sealed class AppLauncher : IAsyncDisposable
     {
         readonly string platformPath;
         readonly bool hideConsoleOutput;
-        readonly Stack<Action> cleanupActions;
+        readonly Stack<Func<ValueTask>> cleanupActions;
 
         public AppLauncher(bool showPlatformToolConsoleOutput)
         {
             platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
             hideConsoleOutput = !showPlatformToolConsoleOutput;
-            cleanupActions = new Stack<Action>();
+            cleanupActions = new Stack<Func<ValueTask>>();
         }
 
         public Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
@@ -35,9 +35,47 @@
             };
 
             EmbeddedServer.Instance.StartServer(options);
-            cleanupActions.Push(EmbeddedServer.Instance.Dispose);
+            cleanupActions.Push(() => StopRavenDB(cancellationToken));
 
             return EmbeddedServer.Instance.GetServerUriAsync(cancellationToken);
+        }
+
+        static async ValueTask StopRavenDB(CancellationToken cancellationToken)
+        {
+            var disposeTask = Task.Run(() => EmbeddedServer.Instance.Dispose(), CancellationToken.None);
+
+            // Runs "infinite" but will eventually get cancelled
+            var waitForCancellationTask = Task.Delay(Timeout.Infinite, cancellationToken);
+
+            var delayIsCancelled = waitForCancellationTask == await Task.WhenAny(disposeTask, waitForCancellationTask)
+                .ConfigureAwait(false);
+
+            if (delayIsCancelled)
+            {
+                int processId = 0;
+                try
+                {
+                    // We always want to try and kill the process, even when already cancelled
+                    processId = await EmbeddedServer.Instance.GetServerProcessIdAsync(CancellationToken.None)
+                        .ConfigureAwait(false);
+                    await Console.Error.WriteLineAsync($"Killing RavenDB server PID {processId} because host cancelled")
+                        .ConfigureAwait(false);
+                    using var ravenChildProcess = Process.GetProcessById(processId);
+                    ravenChildProcess.Kill(entireProcessTree: true);
+                    // Kill only signals
+                    await Console.Error.WriteLineAsync($"Waiting for RavenDB server PID {processId} to exit... ")
+                        .ConfigureAwait(false);
+                    // When WaitForExitAsync returns, the process could still exist but in a frozen state to flush
+                    // memory mapped pages to storage.
+                    await ravenChildProcess.WaitForExitAsync(CancellationToken.None)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    await Console.Error.WriteLineAsync($"Failed to kill RavenDB server PID {processId} shutdown\n{e.Message}")
+                        .ConfigureAwait(false);
+                }
+            }
         }
 
         public void ServiceControl(int port, int maintenancePort, string logPath, string transportPath, int auditPort, Uri connectionString)
@@ -54,6 +92,11 @@
             var configPath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
+            cleanupActions.Push(() =>
+            {
+                File.Delete(configPath);
+                return ValueTask.CompletedTask;
+            });
 
             StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"));
         }
@@ -71,6 +114,11 @@
             var configPath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
+            cleanupActions.Push(() =>
+            {
+                File.Delete(configPath);
+                return ValueTask.CompletedTask;
+            });
 
             StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"));
         }
@@ -86,6 +134,11 @@
             var configPath = Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.exe.config");
 
             File.WriteAllText(configPath, config, Encoding.UTF8);
+            cleanupActions.Push(() =>
+            {
+                File.Delete(configPath);
+                return ValueTask.CompletedTask;
+            });
 
             StartProcess(Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"));
         }
@@ -147,12 +200,12 @@
             return reader.ReadToEnd();
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
             while (cleanupActions.Count > 0)
             {
                 var action = cleanupActions.Pop();
-                action();
+                await action().ConfigureAwait(false);
             }
         }
     }
