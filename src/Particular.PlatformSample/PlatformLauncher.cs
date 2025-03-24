@@ -29,17 +29,17 @@
         {
             using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-            var wait = new ManualResetEvent(false);
-
-            tokenSource.Token.Register(() =>
-            {
-                wait.Set();
-            });
-
             Console.CancelKeyPress += (sender, args) =>
             {
                 args.Cancel = true;
-                tokenSource.Cancel();
+                try
+                {
+                    tokenSource.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // ignore
+                }
             };
 
             var ports = Network.FindAvailablePorts(PortStartSearch, 6);
@@ -111,7 +111,16 @@
 
                 Console.WriteLine();
                 Console.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
-                wait.WaitOne();
+
+                try
+                {
+                    await Task.Delay(Timeout.InfiniteTimeSpan, tokenSource.Token)
+                        .ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (tokenSource.Token.IsCancellationRequested)
+                {
+                    // ignore
+                }
             }
 
             Console.WriteLine();
