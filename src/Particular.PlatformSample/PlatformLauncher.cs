@@ -75,7 +75,8 @@
             Console.WriteLine("Creating transport folder");
             var transportPath = finder.GetDirectory(".learningtransport");
 
-            using var launcher = new AppLauncher(showPlatformToolConsoleOutput);
+            var launcher = new AppLauncher(showPlatformToolConsoleOutput);
+            await using var _ = launcher.ConfigureAwait(false);
 
             Console.WriteLine("Launching RavenDB");
             var serverUri = await launcher.RavenDB(ravenLogs, ravenDB, cancellationToken).ConfigureAwait(false);
