@@ -6,7 +6,9 @@
 
     class Finder
     {
-        public string SolutionRoot { get; }
+        public string Root { get; }
+
+        public Finder(string root) => Root = root;
 
         public Finder()
         {
@@ -16,7 +18,7 @@
             {
                 if (Directory.EnumerateFiles(directory).Any(file => file.EndsWith(".sln")))
                 {
-                    SolutionRoot = directory;
+                    Root = directory;
                     return;
                 }
 
@@ -28,7 +30,7 @@
 
         public string GetDirectory(string relativePath)
         {
-            var fullPath = Path.GetFullPath(Path.Combine(SolutionRoot, relativePath));
+            var fullPath = Path.GetFullPath(Path.Combine(Root, relativePath));
             Directory.CreateDirectory(fullPath);
 
             return fullPath;
