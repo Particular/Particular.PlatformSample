@@ -24,8 +24,9 @@
         /// </summary>
         /// <param name="showPlatformToolConsoleOutput">By default, the output of each application is suppressed. Set to true to show tool output in the console window.</param>
         /// <param name="servicePulseDefaultRoute">By default, the ServicePulse dashboard (/dashboard) is displayed. Set the default route to any valid ServicePulse route such as (/monitoring).</param>
+        /// <param name="rootFolder">Overrides the root folder used to store all the platform data. By default the root folder is determined by searching for a solution file.</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        public static async Task Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null, CancellationToken cancellationToken = default)
+        public static async Task Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null, string rootFolder = null, CancellationToken cancellationToken = default)
         {
             using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
@@ -60,9 +61,11 @@
             Console.WriteLine($"Found free port '{monitoringPort}' for ServiceControl Monitoring");
             Console.WriteLine($"Found free port '{pulsePort}' for ServicePulse");
 
-            var finder = new Finder();
+            var finder = rootFolder != null
+                ? new Finder(rootFolder)
+                : new Finder();
 
-            Console.WriteLine("Solution Folder: " + finder.SolutionRoot);
+            Console.WriteLine("Root Folder: " + finder.Root);
 
             Console.WriteLine("Creating log folders");
             var ravenLogs = finder.GetDirectory(Path.Combine(".logs", "raven"));
