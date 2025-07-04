@@ -10,8 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="Particular.Packaging" Version="4.4.0" PrivateAssets="All" />
-    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="6.6.4" PrivateAssets="None" AutomaticVersionRange="false" />
-    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="2.0.2" PrivateAssets="None" AutomaticVersionRange="false" />
+    <PackageReference Include="Particular.PlatformSample.ServiceControl" Version="6.7.1" PrivateAssets="None" AutomaticVersionRange="false" />
+    <PackageReference Include="Particular.PlatformSample.ServicePulse" Version="2.1.0" PrivateAssets="None" AutomaticVersionRange="false" />
   </ItemGroup>
 
   <ItemGroup>
