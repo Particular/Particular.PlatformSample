@@ -143,8 +143,12 @@
                 { "ASPNETCORE_HTTP_PORTS", port.ToString() },
                 { "SERVICECONTROL_URL", $"http://localhost:{serviceControlPort}" },
                 { "MONITORING_URL", $"http://localhost:{monitoringPort}" },
-                { "DEFAULT_ROUTE", defaultRoute }
             };
+
+            if (defaultRoute != null)
+            {
+                environmentVariables.Add("DEFAULT_ROUTE", defaultRoute);
+            }
 
             StartProcess(Path.Combine(platformPath, "servicepulse", "ServicePulse.dll"), environmentVariables);
         }
