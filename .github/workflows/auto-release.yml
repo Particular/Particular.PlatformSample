@@ -11,6 +11,8 @@ env:
 jobs:
   auto-release:
     name: Automatic Release
+    # Don't run unless merging to the default branch
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
     runs-on: ubuntu-latest
     steps:
       # Checkout required for GitHub CLI to work
@@ -45,9 +47,6 @@ jobs:
           $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
           echo "Latest release is $latest, next release should be $nextMinor"
           echo "Tagging release of $nextMinor"
-          git tag $nextMinor
-          echo "Pushing tags"
-          git push --tags
+          gh api repos/Particular/Particular.PlatformSample/git/refs -f ref="refs/tags/$nextMinor" -f sha="$GITHUB_SHA"
           echo "Release triggered, complete"
           exit 0
-          
