@@ -47,6 +47,6 @@ jobs:
           $nextMinor = "$($latest.Major).$($latest.Minor + 1).0"
           echo "Latest release is $latest, next release should be $nextMinor"
           echo "Tagging release of $nextMinor"
-          gh api repos/Particular/Particular.PlatformSample/git/refs -f ref="refs/tags/$nextMinor" -f sha="$GITHUB_SHA"
+          gh api repos/Particular/Particular.PlatformSample/git/refs -f ref="refs/tags/$nextMinor" -f sha="$Env:GITHUB_SHA"
           echo "Release triggered, complete"
           exit 0
