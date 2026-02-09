@@ -1,7 +1,7 @@
 name: Automatic Release
 on:
-  pull_request:
-    types: closed
+  push:
+    branches: [master, main]
 defaults:
   run:
     shell: pwsh
@@ -23,13 +23,10 @@ jobs:
           fetch-depth: 0
       - name: Determine if auto-release is necessary
         run: |
-          # Script checks the diff of src/Particular.PlatformSample/Particular.PlatformSample.csproj in the just-merged PR, and invokes a release of the next minor if ServiceControl/ServicePulse changes
+          # Script checks the diff of src/Particular.PlatformSample/Particular.PlatformSample.csproj in the latest commit, and invokes a release of the next minor if ServiceControl/ServicePulse changes
         
-          # Get the diff of the component csproj file between the base and head of the just-merged PR
-          $baseSha = "${{ github.event.pull_request.base.sha }}"
-          $headSha = "${{ github.event.pull_request.head.sha }}"
-          echo "Comparing diff of PR's base sha $baseSha with head sha $headSha to determine if ServiceControl/ServicePulse package was updated"
-          $diff = $(git diff $baseSha $headSha src/Particular.PlatformSample/Particular.PlatformSample.csproj )
+          echo "Comparing diff of latest commit (git diff HEAD~1 HEAD) to determine if ServiceControl/ServicePulse package was updated"
+          $diff = $(git diff HEAD~1 HEAD src/Particular.PlatformSample/Particular.PlatformSample.csproj )
           
           # Grep search for lines that show an addition contianing ServiceControl/ServicePulse
           $updates = $diff | grep -E '^\+\s+<PackageReference Include="Particular\.PlatformSample\.(ServiceControl|ServicePulse)"'
