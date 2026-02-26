@@ -16,7 +16,7 @@
 
             while (true)
             {
-                if (Directory.EnumerateFiles(directory).Any(file => file.EndsWith(".sln")))
+                if (Directory.EnumerateFiles(directory).Any(file => file.EndsWith(".sln") || file.EndsWith(".slnx")))
                 {
                     Root = directory;
                     return;

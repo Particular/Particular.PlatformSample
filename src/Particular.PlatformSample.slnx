@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../.github/workflows/ci.yml" />
+    <File Path="../.github/workflows/release.yml" />
+    <File Path="Custom.Build.props" />
+  </Folder>
+  <Project Path="Particular.PlatformSample.Tests/Particular.PlatformSample.Tests.csproj" />
+  <Project Path="Particular.PlatformSample/Particular.PlatformSample.csproj" />
+  <Project Path="SmokeTest/SmokeTest.csproj" />
+</Solution>
