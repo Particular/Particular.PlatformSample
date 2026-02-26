@@ -16,7 +16,7 @@
         readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
         readonly Stack<Func<ValueTask>> cleanupActions = new();
 
-        public Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
+        public async Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
             var licenseFilePath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "Persisters", "RavenDB", "RavenLicense.json");
 
@@ -24,13 +24,23 @@
             {
                 LogsPath = logsPath,
                 DataDirectory = dataDirectory,
-                CommandLineArgs = [$"--License.Path=\"{licenseFilePath}\""]
+                CommandLineArgs = [$"--License.Path=\"{licenseFilePath}\""],
+                FrameworkVersion = null
             };
+
+            var currentRollforward = Environment.GetEnvironmentVariable("DOTNET_ROLL_FORWARD");
+
+            // Make RavenDB roll forward to the next available higher major version if the one it was built against is not installed
+            Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "Major");
 
             EmbeddedServer.Instance.StartServer(options);
             cleanupActions.Push(() => StopRavenDB(cancellationToken));
 
-            return EmbeddedServer.Instance.GetServerUriAsync(cancellationToken);
+            var result = await EmbeddedServer.Instance.GetServerUriAsync(cancellationToken).ConfigureAwait(false);
+
+            Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", currentRollforward);
+
+            return result;
         }
 
         static async ValueTask StopRavenDB(CancellationToken cancellationToken)
