@@ -166,12 +166,14 @@
         void StartProcess(string assemblyPath, Dictionary<string, string> environmentVariables = null)
         {
             var workingDirectory = Path.GetDirectoryName(assemblyPath)!;
-
-            var startInfo = new ProcessStartInfo("dotnet", assemblyPath)
+            var startInfo = new ProcessStartInfo("dotnet")
             {
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = false
             };
+            // Adding the assembly path to the argument list to prevent the path from being separated in to different arguments
+            //  by the ProcessStartInfo constructor by spaces.
+            startInfo.ArgumentList.Add(assemblyPath);
 
             if (environmentVariables is not null)
             {
