@@ -149,7 +149,7 @@ public class VisualTests
                 lastException = ex;
             }
 
-            await Task.Delay(250,cancellationToken);
+            await Task.Delay(250, cancellationToken);
         }
 
         if (lastException != null)
