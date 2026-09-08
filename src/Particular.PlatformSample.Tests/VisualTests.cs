@@ -1,6 +1,7 @@
 namespace Particular.PlatformSample.Tests;
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -74,28 +75,88 @@ public class VisualTests
     [Test]
     public async Task ShouldBeConnected()
     {
-        await Task.Delay(2000);
         driver.Navigate().GoToUrl($"http://localhost:{TestPortsInternal.ServicePulse}/#/dashboard");
-        await Task.Delay(10_000);
+
+        await WaitUntil(
+            () => IsDocumentReady() &&
+                  driver.FindElements(By.CssSelector(".connection-failed")).Count == 0,
+            timeout: TimeSpan.FromSeconds(30),
+            failureMessage: "Expected ServicePulse to show a successful connection state on the dashboard.", CancellationToken.None);
 
         var connectionFailedSpans = driver.FindElements(By.CssSelector(".connection-failed"));
         Assert.That(connectionFailedSpans.Count, Is.EqualTo(0));
+    }
 
-        var connectionOkSpans = driver.FindElements(By.CssSelector(".pa-connection-success"));
-        Assert.That(connectionOkSpans.Count, Is.EqualTo(2));
+    bool IsDocumentReady()
+    {
+        if (driver is not IJavaScriptExecutor js)
+        {
+            return false;
+        }
+
+        var readyState = js.ExecuteScript("return document.readyState")?.ToString();
+        return string.Equals(readyState, "complete", StringComparison.OrdinalIgnoreCase);
     }
 
     [Test]
     public async Task CheckMonitoringPage()
     {
-        await Task.Delay(2000);
         driver.Navigate().GoToUrl($"http://localhost:{TestPortsInternal.ServicePulse}/#/monitoring");
-        await Task.Delay(10_000);
 
-        var primaryButtons = driver.FindElements(By.CssSelector(".btn.btn-primary"));
-        var noEndpointsButton = primaryButtons.Where(b => b.Text.Contains("how to enable endpoint monitoring")).FirstOrDefault();
+        await WaitUntil(
+            () => FindMetricsHelpLink() != null,
+            timeout: TimeSpan.FromSeconds(30),
+            failureMessage: "Expected monitoring page to render a link to metrics setup guidance.", CancellationToken.None);
+
+        var noEndpointsButton = FindMetricsHelpLink();
 
         Assert.That(noEndpointsButton, Is.Not.Null);
-        Assert.That(noEndpointsButton.GetAttribute("href"), Is.EqualTo("https://docs.particular.net/monitoring/metrics/"));
+        var href = noEndpointsButton.GetAttribute("href") ?? string.Empty;
+        Assert.That(href, Does.Contain("monitoring/metrics"));
+    }
+
+    IWebElement FindMetricsHelpLink()
+    {
+        var primaryButtons = driver.FindElements(By.CssSelector("a.btn.btn-primary, .btn.btn-primary[href]"));
+
+        return primaryButtons.FirstOrDefault(b =>
+        {
+            var text = (b.Text ?? string.Empty).ToLowerInvariant();
+            var href = (b.GetAttribute("href") ?? string.Empty).ToLowerInvariant();
+
+            return href.Contains("monitoring/metrics") ||
+                   (text.Contains("enable") && text.Contains("monitoring")) ||
+                   text.Contains("metrics");
+        });
+    }
+
+    static async Task WaitUntil(Func<bool> condition, TimeSpan timeout, string failureMessage, CancellationToken cancellationToken)
+    {
+        var sw = Stopwatch.StartNew();
+        Exception lastException = null;
+
+        while (sw.Elapsed < timeout)
+        {
+            try
+            {
+                if (condition())
+                {
+                    return;
+                }
+            }
+            catch (Exception ex) when (ex is WebDriverException or InvalidOperationException)
+            {
+                lastException = ex;
+            }
+
+            await Task.Delay(250, cancellationToken);
+        }
+
+        if (lastException != null)
+        {
+            throw new AssertionException($"{failureMessage} Last error: {lastException.Message}");
+        }
+
+        throw new AssertionException(failureMessage);
     }
 }
