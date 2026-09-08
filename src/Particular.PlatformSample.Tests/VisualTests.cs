@@ -1,7 +1,6 @@
 namespace Particular.PlatformSample.Tests;
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -69,19 +68,18 @@ public class VisualTests
         await launcherTask;
         closePlatformTokenSource.Dispose();
         driver.Close();
-        driver.Dispose();
+        await driver.DisposeAsync();
     }
 
-    [Test]
-    public async Task ShouldBeConnected()
+    [Test, CancelAfter(30_000)]
+    public async Task ShouldBeConnected(CancellationToken cancellationToken = default)
     {
-        driver.Navigate().GoToUrl($"http://localhost:{TestPortsInternal.ServicePulse}/#/dashboard");
+        await driver.Navigate().GoToUrlAsync($"http://localhost:{TestPortsInternal.ServicePulse}/#/dashboard");
 
-        await WaitUntil(
+        await WaitFor(
             () => IsDocumentReady() &&
                   driver.FindElements(By.CssSelector(".connection-failed")).Count == 0,
-            timeout: TimeSpan.FromSeconds(30),
-            failureMessage: "Expected ServicePulse to show a successful connection state on the dashboard.", CancellationToken.None);
+            failureMessage: "Expected ServicePulse to show a successful connection state on the dashboard.", cancellationToken);
 
         var connectionFailedSpans = driver.FindElements(By.CssSelector(".connection-failed"));
         Assert.That(connectionFailedSpans.Count, Is.EqualTo(0));
@@ -98,15 +96,14 @@ public class VisualTests
         return string.Equals(readyState, "complete", StringComparison.OrdinalIgnoreCase);
     }
 
-    [Test]
-    public async Task CheckMonitoringPage()
+    [Test, CancelAfter(30_000)]
+    public async Task CheckMonitoringPage(CancellationToken cancellationToken = default)
     {
-        driver.Navigate().GoToUrl($"http://localhost:{TestPortsInternal.ServicePulse}/#/monitoring");
+        await driver.Navigate().GoToUrlAsync($"http://localhost:{TestPortsInternal.ServicePulse}/#/monitoring");
 
-        await WaitUntil(
+        await WaitFor(
             () => FindMetricsHelpLink() != null,
-            timeout: TimeSpan.FromSeconds(30),
-            failureMessage: "Expected monitoring page to render a link to metrics setup guidance.", CancellationToken.None);
+            failureMessage: "Expected monitoring page to render a link to metrics setup guidance.", cancellationToken);
 
         var noEndpointsButton = FindMetricsHelpLink();
 
@@ -130,12 +127,10 @@ public class VisualTests
         });
     }
 
-    static async Task WaitUntil(Func<bool> condition, TimeSpan timeout, string failureMessage, CancellationToken cancellationToken)
+    static async Task WaitFor(Func<bool> condition, string failureMessage, CancellationToken cancellationToken)
     {
-        var sw = Stopwatch.StartNew();
         Exception lastException = null;
-
-        while (sw.Elapsed < timeout)
+        while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
@@ -143,13 +138,16 @@ public class VisualTests
                 {
                     return;
                 }
+                await Task.Delay(250, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                //fall through to raise last exception
             }
             catch (Exception ex) when (ex is WebDriverException or InvalidOperationException)
             {
                 lastException = ex;
             }
-
-            await Task.Delay(250, cancellationToken);
         }
 
         if (lastException != null)
