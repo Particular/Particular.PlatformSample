@@ -81,7 +81,7 @@ public class VisualTests
             () => IsDocumentReady() &&
                   driver.FindElements(By.CssSelector(".connection-failed")).Count == 0,
             timeout: TimeSpan.FromSeconds(30),
-            failureMessage: "Expected ServicePulse to show a successful connection state on the dashboard.");
+            failureMessage: "Expected ServicePulse to show a successful connection state on the dashboard.", CancellationToken.None);
 
         var connectionFailedSpans = driver.FindElements(By.CssSelector(".connection-failed"));
         Assert.That(connectionFailedSpans.Count, Is.EqualTo(0));
@@ -106,7 +106,7 @@ public class VisualTests
         await WaitUntil(
             () => FindMetricsHelpLink() != null,
             timeout: TimeSpan.FromSeconds(30),
-            failureMessage: "Expected monitoring page to render a link to metrics setup guidance.");
+            failureMessage: "Expected monitoring page to render a link to metrics setup guidance.", CancellationToken.None);
 
         var noEndpointsButton = FindMetricsHelpLink();
 
@@ -130,7 +130,7 @@ public class VisualTests
         });
     }
 
-    static async Task WaitUntil(Func<bool> condition, TimeSpan timeout, string failureMessage)
+    static async Task WaitUntil(Func<bool> condition, TimeSpan timeout, string failureMessage, CancellationToken cancellationToken)
     {
         var sw = Stopwatch.StartNew();
         Exception lastException = null;
@@ -149,7 +149,7 @@ public class VisualTests
                 lastException = ex;
             }
 
-            await Task.Delay(250);
+            await Task.Delay(250,cancellationToken);
         }
 
         if (lastException != null)
