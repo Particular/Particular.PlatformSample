@@ -15,6 +15,25 @@
         readonly string platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
         readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
         readonly Stack<Func<ValueTask>> cleanupActions = new();
+        readonly StringBuilder serviceControlErrorOutput = new();
+        readonly List<Process> processes = [];
+
+        public string ServiceControlErrorOutput => serviceControlErrorOutput.ToString();
+
+        public void StopProcesses()
+        {
+            foreach (var process in processes)
+            {
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch (InvalidOperationException)
+                {
+                    // The process has already exited
+                }
+            }
+        }
 
         public async Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
@@ -81,7 +100,7 @@
             }
         }
 
-        public void ServiceControl(int port, int maintenancePort, string logPath, string transportPath, int auditPort, Uri connectionString)
+        public Process ServiceControl(int port, int maintenancePort, string logPath, string transportPath, int auditPort, Uri connectionString)
         {
             var config = GetResource("Particular.configs.ServiceControl.exe.config");
 
@@ -101,7 +120,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"));
+            return StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"), errorOutput: serviceControlErrorOutput);
         }
 
         public void ServiceControlAudit(int port, int maintenancePort, string logPath, string transportPath, Uri connectionString)
@@ -163,7 +182,7 @@
             StartProcess(Path.Combine(platformPath, "servicepulse", "ServicePulse.dll"), environmentVariables);
         }
 
-        void StartProcess(string assemblyPath, Dictionary<string, string> environmentVariables = null)
+        Process StartProcess(string assemblyPath, Dictionary<string, string> environmentVariables = null, StringBuilder errorOutput = null)
         {
             var workingDirectory = Path.GetDirectoryName(assemblyPath)!;
             var startInfo = new ProcessStartInfo("dotnet")
@@ -194,9 +213,18 @@
             // without this in certain occasions the start takes waaaaay longer!
             if (hideConsoleOutput)
             {
+                // Keep the hidden error output so it can be shown if the process fails to start
+                if (errorOutput is not null)
+                {
+                    process.ErrorDataReceived += (_, args) => errorOutput.AppendLine(args.Data);
+                }
+
                 process.BeginErrorReadLine();
                 process.BeginOutputReadLine();
             }
+
+            processes.Add(process);
+            return process;
         }
 
         static string GetResource(string resourceName)
