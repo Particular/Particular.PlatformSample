@@ -85,7 +85,7 @@
             var serverUri = await launcher.RavenDB(ravenLogs, ravenDB, cancellationToken).ConfigureAwait(false);
 
             Console.WriteLine("Launching ServiceControl");
-            launcher.ServiceControl(controlPort, maintenancePort, controlLogs, transportPath, auditPort, serverUri);
+            var serviceControl = launcher.ServiceControl(controlPort, maintenancePort, controlLogs, transportPath, auditPort, serverUri);
 
             Console.WriteLine("Launching ServiceControl Audit");
             launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, transportPath, serverUri);
@@ -97,8 +97,24 @@
             launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
 
             Console.Write("Waiting for ServiceControl to be available");
-            await Network.WaitForHttpOk($"http://localhost:{controlPort}/api", cancellationToken: tokenSource.Token)
-                .ConfigureAwait(false);
+            using var waitTokenSource = CancellationTokenSource.CreateLinkedTokenSource(tokenSource.Token);
+            var serviceControlAvailable = Network.WaitForHttpOk($"http://localhost:{controlPort}/api", cancellationToken: waitTokenSource.Token);
+            var serviceControlExited = serviceControl.WaitForExitAsync(waitTokenSource.Token);
+
+            await Task.WhenAny(serviceControlAvailable, serviceControlExited).ConfigureAwait(false);
+            await waitTokenSource.CancelAsync().ConfigureAwait(false);
+
+            // ServiceControl stops straight away if it can't start, for example when the .NET runtime version it requires is not installed
+            if (serviceControlExited.IsCompletedSuccessfully && !tokenSource.IsCancellationRequested)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"ServiceControl failed to start):");
+                Console.WriteLine(launcher.ServiceControlErrorOutput);
+                launcher.StopProcesses();
+                return;
+            }
+
+            await serviceControlAvailable.ConfigureAwait(false);
 
             if (!tokenSource.IsCancellationRequested)
             {
