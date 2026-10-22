@@ -16,6 +16,13 @@
         readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
         readonly Stack<Func<ValueTask>> cleanupActions = new();
 
+        // ServiceControl is built to require one exact .NET runtime patch version. Let the ServiceControl tools
+        // use the latest installed patch of the same major.minor version instead, if that exact version is not installed.
+        static readonly Dictionary<string, string> serviceControlEnvironmentVariables = new()
+        {
+            { "DOTNET_ROLL_FORWARD", "LatestPatch" }
+        };
+
         public async Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
             var licenseFilePath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "Persisters", "RavenDB", "RavenLicense.json");
@@ -101,7 +108,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"));
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"), serviceControlEnvironmentVariables);
         }
 
         public void ServiceControlAudit(int port, int maintenancePort, string logPath, string transportPath, Uri connectionString)
@@ -123,7 +130,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"));
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"), serviceControlEnvironmentVariables);
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -143,7 +150,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"));
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"), serviceControlEnvironmentVariables);
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
@@ -179,7 +186,7 @@
             {
                 foreach (var item in environmentVariables)
                 {
-                    startInfo.EnvironmentVariables.Add(item.Key, item.Value);
+                    startInfo.Environment[item.Key] = item.Value;
                 }
             }
 
