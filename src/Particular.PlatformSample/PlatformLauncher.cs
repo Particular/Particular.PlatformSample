@@ -108,7 +108,7 @@
             if (serviceControlExited.IsCompletedSuccessfully && !tokenSource.IsCancellationRequested)
             {
                 Console.WriteLine();
-                Console.WriteLine($"ServiceControl failed to start):");
+                Console.WriteLine("ServiceControl failed to start:");
                 Console.WriteLine(launcher.ServiceControlErrorOutput);
                 launcher.StopProcesses();
                 return;
