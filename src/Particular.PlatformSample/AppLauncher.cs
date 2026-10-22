@@ -16,8 +16,8 @@
         readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
         readonly Stack<Func<ValueTask>> cleanupActions = new();
 
-        // ServiceControl is built to require one exact .NET runtime patch version. Let the ServiceControl tools
-        // use the latest installed patch of the same major.minor version instead, if that exact version is not installed.
+        // ServiceControl is built to require one exact .NET runtime patch version. Let the ServiceControl tools run on
+        // the latest installed patch of the same major.minor version instead, so they still start when that exact version is not installed.
         static readonly Dictionary<string, string> serviceControlEnvironmentVariables = new()
         {
             { "DOTNET_ROLL_FORWARD", "LatestPatch" }
