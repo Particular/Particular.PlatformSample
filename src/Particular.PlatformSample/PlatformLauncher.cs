@@ -104,7 +104,7 @@
             await Task.WhenAny(serviceControlAvailable, serviceControlExited).ConfigureAwait(false);
             await waitTokenSource.CancelAsync().ConfigureAwait(false);
 
-            // ServiceControl stops straight away if it can't start, for example when the .NET runtime version it requires is not installed
+            // ServiceControl exited on its own (not because of Ctrl+C), for example because the .NET runtime version it requires is not installed
             if (serviceControlExited.IsCompletedSuccessfully && !tokenSource.IsCancellationRequested)
             {
                 Console.WriteLine();
