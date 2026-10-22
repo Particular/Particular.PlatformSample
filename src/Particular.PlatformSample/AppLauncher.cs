@@ -216,7 +216,13 @@
                 // Keep the hidden error output so it can be shown if the process fails to start
                 if (errorOutput is not null)
                 {
-                    process.ErrorDataReceived += (_, args) => errorOutput.AppendLine(args.Data);
+                    process.ErrorDataReceived += (_, args) =>
+                    {
+                        if (args.Data is not null)
+                        {
+                            errorOutput.AppendLine(args.Data);
+                        }
+                    };
                 }
 
                 process.BeginErrorReadLine();
