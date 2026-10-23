@@ -37,13 +37,13 @@ namespace Particular.PlatformSample.Tests
                 startInfo.Environment.Remove("DOTNET_ROLL_FORWARD");
 
                 await using var child = new ChildProcess("ServiceControl", startInfo, showConsoleOutput);
-                var failure = await child.Exited.WaitAsync(TimeSpan.FromSeconds(15));
+                var exit = await child.Exited.WaitAsync(TimeSpan.FromSeconds(15));
 
                 Assert.Multiple(() =>
                 {
-                    Assert.That(failure, Is.TypeOf<InvalidOperationException>());
-                    Assert.That(failure.Message, Does.Contain("ServiceControl").And.Contain("exit code"));
-                    Assert.That(failure.Message, Does.Contain("Microsoft.NETCore.App").And.Contain("999.0.0"));
+                    Assert.That(exit.ProcessName, Is.EqualTo("ServiceControl"));
+                    Assert.That(exit.ExitCode, Is.Not.Zero);
+                    Assert.That(exit.StandardError, Does.Contain("Microsoft.NETCore.App").And.Contain("999.0.0"));
                 });
             }
             finally
@@ -54,18 +54,19 @@ namespace Particular.PlatformSample.Tests
 
         [TestCase(false)]
         [TestCase(true)]
-        public async Task ReportsUnexpectedSuccessfulExitAndCapturesStandardOutput(bool showConsoleOutput)
+        public async Task ReportsSuccessfulExitAndCapturesStandardOutput(bool showConsoleOutput)
         {
             var startInfo = new ProcessStartInfo(Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet");
             startInfo.ArgumentList.Add("--list-runtimes");
 
             await using var child = new ChildProcess("ServiceControl.Monitoring", startInfo, showConsoleOutput);
-            var failure = await child.Exited.WaitAsync(TimeSpan.FromSeconds(15));
+            var exit = await child.Exited.WaitAsync(TimeSpan.FromSeconds(15));
 
             Assert.Multiple(() =>
             {
-                Assert.That(failure.Message, Does.Contain("ServiceControl.Monitoring").And.Contain("exit code 0"));
-                Assert.That(failure.Message, Does.Contain("Microsoft.NETCore.App"));
+                Assert.That(exit.ProcessName, Is.EqualTo("ServiceControl.Monitoring"));
+                Assert.That(exit.ExitCode, Is.Zero);
+                Assert.That(exit.StandardOutput, Does.Contain("Microsoft.NETCore.App"));
             });
         }
     }

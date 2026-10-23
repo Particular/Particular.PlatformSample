@@ -102,9 +102,9 @@
                 launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
 
                 Console.Write("Waiting for ServiceControl to be available");
-                var processExit = launcher.WaitForExit(CancellationToken.None);
+                var unexpectedExitTask = launcher.WaitForFirstExit(CancellationToken.None);
                 startup = Network.WaitForHttpOk($"http://localhost:{controlPort}/api", cancellationToken: tokenSource.Token);
-                await WaitForTaskOrExit(startup, processExit, tokenSource.Token).ConfigureAwait(false);
+                await WaitForTaskOrUnexpectedExit(startup, unexpectedExitTask, tokenSource.Token).ConfigureAwait(false);
 
                 if (!tokenSource.IsCancellationRequested)
                 {
@@ -123,7 +123,7 @@
 
                     try
                     {
-                        await WaitForTaskOrExit(Task.Delay(Timeout.InfiniteTimeSpan, tokenSource.Token), processExit, tokenSource.Token)
+                        await WaitForTaskOrUnexpectedExit(Task.Delay(Timeout.InfiniteTimeSpan, tokenSource.Token), unexpectedExitTask, tokenSource.Token)
                             .ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) when (tokenSource.Token.IsCancellationRequested)
@@ -150,16 +150,17 @@
             }
         }
 
-        static async Task WaitForTaskOrExit(Task task, Task<Exception> processExit, CancellationToken cancellationToken)
+        static async Task WaitForTaskOrUnexpectedExit(Task operationTask, Task<ProcessExit> unexpectedExitTask, CancellationToken cancellationToken)
         {
-            var completed = await Task.WhenAny(task, processExit).WaitAsync(cancellationToken).ConfigureAwait(false);
+            var completedTask = await Task.WhenAny(operationTask, unexpectedExitTask).WaitAsync(cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
-            if (completed == processExit)
+            if (completedTask == unexpectedExitTask)
             {
-                throw await processExit.ConfigureAwait(false);
+                var exit = await unexpectedExitTask.ConfigureAwait(false);
+                throw new InvalidOperationException($"Platform tool '{exit.ProcessName}' exited unexpectedly with exit code {exit.ExitCode}.{Environment.NewLine}Standard output:{Environment.NewLine}{exit.StandardOutput}{Environment.NewLine}Standard error:{Environment.NewLine}{exit.StandardError}");
             }
 
-            await task.ConfigureAwait(false);
+            await operationTask.ConfigureAwait(false);
         }
     }
 }

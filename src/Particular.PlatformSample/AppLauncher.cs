@@ -16,6 +16,7 @@
         readonly string platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
         readonly List<ChildProcess> processes = [];
         readonly Stack<Func<ValueTask>> cleanupActions = new();
+        Task<ProcessExit> firstExitTask;
 
         public async Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
@@ -197,10 +198,13 @@
             processes.Add(process);
         }
 
-        public async Task<Exception> WaitForExit(CancellationToken cancellationToken = default)
+        public Task<ProcessExit> WaitForFirstExit(CancellationToken cancellationToken = default) =>
+            (firstExitTask ??= ObserveFirstExit(CancellationToken.None)).WaitAsync(cancellationToken);
+
+        async Task<ProcessExit> ObserveFirstExit(CancellationToken cancellationToken)
         {
-            var exited = await Task.WhenAny(processes.Select(process => process.Exited)).WaitAsync(cancellationToken).ConfigureAwait(false);
-            return await exited.ConfigureAwait(false);
+            var exitedTask = await Task.WhenAny(processes.Select(process => process.Exited)).WaitAsync(cancellationToken).ConfigureAwait(false);
+            return await exitedTask.ConfigureAwait(false);
         }
 
         static string GetResource(string resourceName)
@@ -218,7 +222,14 @@
             try
             {
                 // Give all tools the same grace period, before deleting any of their configuration files.
-                await Task.WhenAll(processes.Select(process => process.DisposeAsync().AsTask())).ConfigureAwait(false);
+                var shutdownTasks = processes.Select(process => process.DisposeAsync().AsTask()).ToList();
+                if (firstExitTask != null)
+                {
+                    // Observe monitoring failures even when shutdown wins the race with a process exit.
+                    shutdownTasks.Add(firstExitTask);
+                }
+
+                await Task.WhenAll(shutdownTasks).ConfigureAwait(false);
             }
             finally
             {

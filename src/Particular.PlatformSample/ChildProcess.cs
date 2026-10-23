@@ -25,21 +25,20 @@ namespace Particular
             Exited = ObserveExit(name, output, error, CancellationToken.None);
         }
 
-        // Return the failure so exits from several tools can be monitored without unobserved task exceptions.
-        public Task<Exception> Exited { get; }
+        public Task<ProcessExit> Exited { get; }
 
-        async Task<Exception> ObserveExit(string name, Task<string> output, Task<string> error, CancellationToken cancellationToken)
+        async Task<ProcessExit> ObserveExit(string name, Task<string> output, Task<string> error, CancellationToken cancellationToken)
         {
             try
             {
                 await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
                 var capturedOutput = await Task.WhenAll(output, error).ConfigureAwait(false);
 
-                return new InvalidOperationException($"Platform tool '{name}' exited unexpectedly with exit code {process.ExitCode}.{Environment.NewLine}{string.Join(Environment.NewLine, capturedOutput)}");
+                return new ProcessExit(name, process.ExitCode, capturedOutput[0], capturedOutput[1]);
             }
             catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
-                return new InvalidOperationException($"Could not monitor platform tool '{name}'.", exception);
+                throw new InvalidOperationException($"Could not monitor platform tool '{name}'.", exception);
             }
         }
 
@@ -70,7 +69,7 @@ namespace Particular
                 try
                 {
                     // Ctrl+C also reaches the tools. Let them finish shutting down before forcing termination.
-                    await Exited.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+                    await process.WaitForExitAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
                 }
                 catch (TimeoutException)
                 {
