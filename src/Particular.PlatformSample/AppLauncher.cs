@@ -175,7 +175,7 @@
             // let the platform tools run on the latest installed patch of the same major.minor version, so they still start when that exact version
             // is not installed.
             startInfo.ArgumentList.Add("--roll-forward");
-            startInfo.ArgumentList.Add("LatestPatch");
+            startInfo.ArgumentList.Add("Minor");
             // Adding the assembly path to the argument list to prevent the path from being separated in to different arguments
             //  by the ProcessStartInfo constructor by spaces.
             startInfo.ArgumentList.Add(assemblyPath);
