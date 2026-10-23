@@ -15,7 +15,7 @@
         readonly string platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
         readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
         readonly Stack<Func<ValueTask>> cleanupActions = new();
-        readonly StringBuilder serviceControlErrorOutput = new();
+        readonly BoundedOutput serviceControlErrorOutput = new();
         readonly List<Process> processes = [];
 
         public string ServiceControlErrorOutput => serviceControlErrorOutput.ToString();
@@ -182,7 +182,7 @@
             StartProcess(Path.Combine(platformPath, "servicepulse", "ServicePulse.dll"), environmentVariables);
         }
 
-        Process StartProcess(string assemblyPath, Dictionary<string, string> environmentVariables = null, StringBuilder errorOutput = null)
+        Process StartProcess(string assemblyPath, Dictionary<string, string> environmentVariables = null, BoundedOutput errorOutput = null)
         {
             var workingDirectory = Path.GetDirectoryName(assemblyPath)!;
             var startInfo = new ProcessStartInfo("dotnet")
