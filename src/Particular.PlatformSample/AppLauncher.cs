@@ -173,7 +173,7 @@
             };
             // ServiceControl is built to require one exact .NET runtime patch version. Since this is for running samples and not production code,
             // let the platform tools run on the latest installed patch of the same major.minor version, so they still start when that exact version
-            // is not installed. These are options for the dotnet host, so they must come before the assembly path.
+            // is not installed.
             startInfo.ArgumentList.Add("--roll-forward");
             startInfo.ArgumentList.Add("LatestPatch");
             // Adding the assembly path to the argument list to prevent the path from being separated in to different arguments
