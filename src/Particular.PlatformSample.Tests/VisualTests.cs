@@ -46,7 +46,7 @@ public class VisualTests
         chromeOpts.AddArgument("--disk-cache-size=1");
         chromeOpts.AddArgument("--media-cache-size=1");
         chromeOpts.AddArgument("--incognito");
-        chromeOpts.AddArgument("--remote-debugging-port=9222");
+        chromeOpts.AddArgument("--remote-debugging-pipe");
         chromeOpts.AddArgument("--aggressive-cache-discard");
 
         if (Environment.GetEnvironmentVariable("CI") == "true")
@@ -58,17 +58,33 @@ public class VisualTests
         }
 
         var chromeService = ChromeDriverService.CreateDefaultService();
-        driver = new ChromeDriver(chromeService, chromeOpts, TimeSpan.FromSeconds(90));
+        try
+        {
+            driver = new ChromeDriver(chromeService, chromeOpts, TimeSpan.FromSeconds(90));
+        }
+        catch
+        {
+            chromeService.Dispose();
+            throw;
+        }
     }
 
     [OneTimeTearDown]
     public async Task TearDown()
     {
-        await closePlatformTokenSource.CancelAsync();
-        await launcherTask;
-        closePlatformTokenSource.Dispose();
-        driver.Close();
-        await driver.DisposeAsync();
+        try
+        {
+            await closePlatformTokenSource.CancelAsync();
+            await launcherTask;
+        }
+        finally
+        {
+            closePlatformTokenSource.Dispose();
+            if (driver != null)
+            {
+                await driver.DisposeAsync();
+            }
+        }
     }
 
     [Test, CancelAfter(30_000)]
