@@ -4,16 +4,17 @@
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Raven.Embedded;
 
-    sealed class AppLauncher(bool showPlatformToolConsoleOutput) : IAsyncDisposable
+    sealed class AppLauncher(bool showPlatformToolConsoleOutput, CancellationToken shutdownCancellationToken = default) : IAsyncDisposable
     {
         readonly string platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
-        readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
+        readonly List<ChildProcess> processes = [];
         readonly Stack<Func<ValueTask>> cleanupActions = new();
 
         public async Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
@@ -33,14 +34,17 @@
             // Make RavenDB roll forward to the next available higher major version if the one it was built against is not installed
             Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "Major");
 
-            EmbeddedServer.Instance.StartServer(options);
-            cleanupActions.Push(() => StopRavenDB(cancellationToken));
+            try
+            {
+                EmbeddedServer.Instance.StartServer(options);
+                cleanupActions.Push(() => StopRavenDB(shutdownCancellationToken));
 
-            var result = await EmbeddedServer.Instance.GetServerUriAsync(cancellationToken).ConfigureAwait(false);
-
-            Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", currentRollforward);
-
-            return result;
+                return await EmbeddedServer.Instance.GetServerUriAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", currentRollforward);
+            }
         }
 
         static async ValueTask StopRavenDB(CancellationToken cancellationToken)
@@ -79,6 +83,8 @@
                         .ConfigureAwait(false);
                 }
             }
+
+            await disposeTask.ConfigureAwait(false);
         }
 
         public void ServiceControl(int port, int maintenancePort, string logPath, string transportPath, int auditPort, Uri connectionString)
@@ -175,6 +181,10 @@
             //  by the ProcessStartInfo constructor by spaces.
             startInfo.ArgumentList.Add(assemblyPath);
 
+            // Portable tools can use newer patches without requiring the exact runtime they were built against.
+            // Preserve an explicit override supplied by the caller.
+            startInfo.Environment.TryAdd("DOTNET_ROLL_FORWARD", "LatestPatch");
+
             if (environmentVariables is not null)
             {
                 foreach (var item in environmentVariables)
@@ -183,20 +193,14 @@
                 }
             }
 
-            if (hideConsoleOutput)
-            {
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
-            }
+            var process = new ChildProcess(Path.GetFileNameWithoutExtension(assemblyPath), startInfo, showPlatformToolConsoleOutput);
+            processes.Add(process);
+        }
 
-            var process = Process.Start(startInfo);
-
-            // without this in certain occasions the start takes waaaaay longer!
-            if (hideConsoleOutput)
-            {
-                process.BeginErrorReadLine();
-                process.BeginOutputReadLine();
-            }
+        public async Task<Exception> WaitForExit(CancellationToken cancellationToken = default)
+        {
+            var exited = await Task.WhenAny(processes.Select(process => process.Exited)).WaitAsync(cancellationToken).ConfigureAwait(false);
+            return await exited.ConfigureAwait(false);
         }
 
         static string GetResource(string resourceName)
@@ -211,10 +215,18 @@
 
         public async ValueTask DisposeAsync()
         {
-            while (cleanupActions.Count > 0)
+            try
             {
-                var action = cleanupActions.Pop();
-                await action().ConfigureAwait(false);
+                // Give all tools the same grace period, before deleting any of their configuration files.
+                await Task.WhenAll(processes.Select(process => process.DisposeAsync().AsTask())).ConfigureAwait(false);
+            }
+            finally
+            {
+                while (cleanupActions.Count > 0)
+                {
+                    var action = cleanupActions.Pop();
+                    await action().ConfigureAwait(false);
+                }
             }
         }
     }

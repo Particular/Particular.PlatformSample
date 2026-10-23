@@ -26,11 +26,12 @@
         /// <param name="servicePulseDefaultRoute">By default, the ServicePulse dashboard (/dashboard) is displayed. Set the default route to any valid ServicePulse route such as (/monitoring).</param>
         /// <param name="rootFolder">Overrides the root folder used to store all the platform data. By default the root folder is determined by searching for a solution file.</param>
         /// <param name="cancellationToken">Cancellation token</param>
+        /// <exception cref="InvalidOperationException">A platform tool exits unexpectedly. Includes its exit code and recent console output.</exception>
         public static async Task Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null, string rootFolder = null, CancellationToken cancellationToken = default)
         {
             using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-            Console.CancelKeyPress += (sender, args) =>
+            ConsoleCancelEventHandler cancelHandler = (sender, args) =>
             {
                 args.Cancel = true;
                 try
@@ -78,56 +79,87 @@
             Console.WriteLine("Creating transport folder");
             var transportPath = finder.GetDirectory(".learningtransport");
 
-            var launcher = new AppLauncher(showPlatformToolConsoleOutput);
+            var launcher = new AppLauncher(showPlatformToolConsoleOutput, shutdownCancellationToken: cancellationToken);
             await using var _ = launcher.ConfigureAwait(false);
 
-            Console.WriteLine("Launching RavenDB");
-            var serverUri = await launcher.RavenDB(ravenLogs, ravenDB, cancellationToken).ConfigureAwait(false);
-
-            Console.WriteLine("Launching ServiceControl");
-            launcher.ServiceControl(controlPort, maintenancePort, controlLogs, transportPath, auditPort, serverUri);
-
-            Console.WriteLine("Launching ServiceControl Audit");
-            launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, transportPath, serverUri);
-
-            Console.WriteLine("Launching ServiceControl Monitoring");
-            launcher.Monitoring(monitoringPort, monitoringLogs, transportPath);
-
-            Console.WriteLine("Launching ServicePulse");
-            launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
-
-            Console.Write("Waiting for ServiceControl to be available");
-            await Network.WaitForHttpOk($"http://localhost:{controlPort}/api", cancellationToken: tokenSource.Token)
-                .ConfigureAwait(false);
-
-            if (!tokenSource.IsCancellationRequested)
+            Task startup = Task.CompletedTask;
+            Console.CancelKeyPress += cancelHandler;
+            try
             {
-                var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
-                Console.WriteLine();
-                Console.WriteLine($"ServiceControl API can now be accessed via: {serviceControlApiUrl}");
+                Console.WriteLine("Launching RavenDB");
+                var serverUri = await launcher.RavenDB(ravenLogs, ravenDB, tokenSource.Token).ConfigureAwait(false);
 
-                var servicePulseUrl = $"http://localhost:{pulsePort}";
-                Console.WriteLine();
-                Console.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
-                Console.WriteLine("Attempting to launch ServicePulse in a browser window...");
-                Process.Start(new ProcessStartInfo(servicePulseUrl) { UseShellExecute = true });
+                Console.WriteLine("Launching ServiceControl");
+                launcher.ServiceControl(controlPort, maintenancePort, controlLogs, transportPath, auditPort, serverUri);
+
+                Console.WriteLine("Launching ServiceControl Audit");
+                launcher.ServiceControlAudit(auditPort, auditMaintenancePort, auditLogs, transportPath, serverUri);
+
+                Console.WriteLine("Launching ServiceControl Monitoring");
+                launcher.Monitoring(monitoringPort, monitoringLogs, transportPath);
+
+                Console.WriteLine("Launching ServicePulse");
+                launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
+
+                Console.Write("Waiting for ServiceControl to be available");
+                var processExit = launcher.WaitForExit(CancellationToken.None);
+                startup = Network.WaitForHttpOk($"http://localhost:{controlPort}/api", cancellationToken: tokenSource.Token);
+                await WaitForTaskOrExit(startup, processExit, tokenSource.Token).ConfigureAwait(false);
+
+                if (!tokenSource.IsCancellationRequested)
+                {
+                    var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
+                    Console.WriteLine();
+                    Console.WriteLine($"ServiceControl API can now be accessed via: {serviceControlApiUrl}");
+
+                    var servicePulseUrl = $"http://localhost:{pulsePort}";
+                    Console.WriteLine();
+                    Console.WriteLine($"ServicePulse can now be accessed via: {servicePulseUrl}");
+                    Console.WriteLine("Attempting to launch ServicePulse in a browser window...");
+                    Process.Start(new ProcessStartInfo(servicePulseUrl) { UseShellExecute = true });
+
+                    Console.WriteLine();
+                    Console.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
+
+                    try
+                    {
+                        await WaitForTaskOrExit(Task.Delay(Timeout.InfiniteTimeSpan, tokenSource.Token), processExit, tokenSource.Token)
+                            .ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (tokenSource.Token.IsCancellationRequested)
+                    {
+                        // ignore
+                    }
+                }
 
                 Console.WriteLine();
-                Console.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
-
+                Console.WriteLine("Waiting for external processes to shut down...");
+            }
+            finally
+            {
+                Console.CancelKeyPress -= cancelHandler;
+                await tokenSource.CancelAsync().ConfigureAwait(false);
                 try
                 {
-                    await Task.Delay(Timeout.InfiniteTimeSpan, tokenSource.Token)
-                        .ConfigureAwait(false);
+                    await startup.ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (tokenSource.Token.IsCancellationRequested)
+                catch (OperationCanceledException) when (tokenSource.IsCancellationRequested)
                 {
-                    // ignore
+                    // The readiness request is cancelled when a child exits or the launcher stops.
                 }
             }
+        }
 
-            Console.WriteLine();
-            Console.WriteLine("Waiting for external processes to shut down...");
+        static async Task WaitForTaskOrExit(Task task, Task<Exception> processExit, CancellationToken cancellationToken)
+        {
+            var completed = await Task.WhenAny(task, processExit).WaitAsync(cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (completed == processExit)
+            {
+                throw await processExit.ConfigureAwait(false);
+            }
+
+            await task.ConfigureAwait(false);
         }
     }
 }
