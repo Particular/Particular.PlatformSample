@@ -31,6 +31,17 @@ This can be seen directly in this repository by launching the **SmokeTest.exe**:
 
 ![SmokeTest Output](output.png)
 
+### Inspecting the launch outcome
+
+`Launch` reports an unexpected tool exit to standard error, stops the remaining tools, and returns after cleanup. To distinguish a tool exit from requested shutdown in code, use `LaunchWithResult` with the same optional parameters:
+
+```csharp
+var result = await Particular.PlatformLauncher.LaunchWithResult();
+return result.UnexpectedExit == null ? 0 : 1;
+```
+
+`UnexpectedExit` contains the tool name, exit code, and recent standard output and standard error. An exit code of zero is still unexpected while the launcher is running. The property is null after shutdown requested by Ctrl+C or the cancellation token, including cancellation before startup completes. Setup, monitoring, and cleanup errors can still fault the returned task.
+
 ## Options
 
 The `PlatformLauncher.Launch()` API has very limited options available as optional parameters, which can be mixed as needed.

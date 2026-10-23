@@ -26,9 +26,30 @@
         /// <param name="servicePulseDefaultRoute">By default, the ServicePulse dashboard (/dashboard) is displayed. Set the default route to any valid ServicePulse route such as (/monitoring).</param>
         /// <param name="rootFolder">Overrides the root folder used to store all the platform data. By default the root folder is determined by searching for a solution file.</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <exception cref="InvalidOperationException">A platform tool exits unexpectedly. Includes its exit code and recent console output.</exception>
+        /// <remarks>
+        /// Unexpected tool exits are reported to standard error. Use <see cref="LaunchWithResult"/> to inspect the outcome.
+        /// </remarks>
         public static async Task Launch(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null, string rootFolder = null, CancellationToken cancellationToken = default)
         {
+            await LaunchWithResult(showPlatformToolConsoleOutput, servicePulseDefaultRoute, rootFolder, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Runs the platform tools until shutdown is requested or a tool exits, and returns the outcome after cleanup.
+        /// Unexpected tool exits are also reported to standard error.
+        /// </summary>
+        /// <param name="showPlatformToolConsoleOutput">Whether to show tool console output while the tools are running.</param>
+        /// <param name="servicePulseDefaultRoute">The ServicePulse route to open. Defaults to the dashboard.</param>
+        /// <param name="rootFolder">Overrides the root folder used for platform data.</param>
+        /// <param name="cancellationToken">Requests shutdown.</param>
+        /// <returns>A result identifying an unexpected tool exit, or a result with no unexpected exit when shutdown was requested.</returns>
+        public static async Task<LaunchResult> LaunchWithResult(bool showPlatformToolConsoleOutput = false, string servicePulseDefaultRoute = null, string rootFolder = null, CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return new LaunchResult();
+            }
+
             using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             ConsoleCancelEventHandler cancelHandler = (sender, args) =>
@@ -87,7 +108,15 @@
             try
             {
                 Console.WriteLine("Launching RavenDB");
-                var serverUri = await launcher.RavenDB(ravenLogs, ravenDB, tokenSource.Token).ConfigureAwait(false);
+                Uri serverUri;
+                try
+                {
+                    serverUri = await launcher.RavenDB(ravenLogs, ravenDB, tokenSource.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (tokenSource.Token.IsCancellationRequested)
+                {
+                    return new LaunchResult();
+                }
 
                 Console.WriteLine("Launching ServiceControl");
                 launcher.ServiceControl(controlPort, maintenancePort, controlLogs, transportPath, auditPort, serverUri);
@@ -104,9 +133,9 @@
                 Console.Write("Waiting for ServiceControl to be available");
                 var unexpectedExitTask = launcher.WaitForFirstExit(CancellationToken.None);
                 startup = Network.WaitForHttpOk($"http://localhost:{controlPort}/api", cancellationToken: tokenSource.Token);
-                await WaitForTaskOrUnexpectedExit(startup, unexpectedExitTask, tokenSource.Token).ConfigureAwait(false);
+                var unexpectedExit = await WaitForTaskOrUnexpectedExit(startup, unexpectedExitTask, tokenSource.Token).ConfigureAwait(false);
 
-                if (!tokenSource.IsCancellationRequested)
+                if (unexpectedExit == null && !tokenSource.IsCancellationRequested)
                 {
                     var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
                     Console.WriteLine();
@@ -121,19 +150,20 @@
                     Console.WriteLine();
                     Console.WriteLine("Press Ctrl+C stop Particular Service Platform tools.");
 
-                    try
-                    {
-                        await WaitForTaskOrUnexpectedExit(Task.Delay(Timeout.InfiniteTimeSpan, tokenSource.Token), unexpectedExitTask, tokenSource.Token)
-                            .ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException) when (tokenSource.Token.IsCancellationRequested)
-                    {
-                        // ignore
-                    }
+                    unexpectedExit = await WaitForTaskOrUnexpectedExit(Task.Delay(Timeout.InfiniteTimeSpan, CancellationToken.None), unexpectedExitTask, tokenSource.Token)
+                        .ConfigureAwait(false);
+                }
+
+                if (unexpectedExit != null)
+                {
+                    await Console.Error.WriteLineAsync().ConfigureAwait(false);
+                    await Console.Error.WriteLineAsync($"Platform tool '{unexpectedExit.ProcessName}' exited unexpectedly with exit code {unexpectedExit.ExitCode}.{Environment.NewLine}Standard output:{Environment.NewLine}{unexpectedExit.StandardOutput}{Environment.NewLine}Standard error:{Environment.NewLine}{unexpectedExit.StandardError}")
+                        .ConfigureAwait(false);
                 }
 
                 Console.WriteLine();
                 Console.WriteLine("Waiting for external processes to shut down...");
+                return new LaunchResult(unexpectedExit);
             }
             finally
             {
@@ -143,24 +173,30 @@
                 {
                     await startup.ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (tokenSource.IsCancellationRequested)
+                catch (OperationCanceledException) when (tokenSource.Token.IsCancellationRequested)
                 {
                     // The readiness request is cancelled when a child exits or the launcher stops.
                 }
             }
         }
 
-        static async Task WaitForTaskOrUnexpectedExit(Task operationTask, Task<ProcessExit> unexpectedExitTask, CancellationToken cancellationToken)
+        internal static async Task<ProcessExit> WaitForTaskOrUnexpectedExit(Task operationTask, Task<ProcessExit> unexpectedExitTask, CancellationToken cancellationToken = default)
         {
-            var completedTask = await Task.WhenAny(operationTask, unexpectedExitTask).WaitAsync(cancellationToken).ConfigureAwait(false);
-            cancellationToken.ThrowIfCancellationRequested();
+            var shutdownRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using var registration = cancellationToken.Register(() => shutdownRequested.TrySetResult());
+            var completedTask = await Task.WhenAny(operationTask, unexpectedExitTask, shutdownRequested.Task).ConfigureAwait(false);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return null;
+            }
+
             if (completedTask == unexpectedExitTask)
             {
-                var exit = await unexpectedExitTask.ConfigureAwait(false);
-                throw new InvalidOperationException($"Platform tool '{exit.ProcessName}' exited unexpectedly with exit code {exit.ExitCode}.{Environment.NewLine}Standard output:{Environment.NewLine}{exit.StandardOutput}{Environment.NewLine}Standard error:{Environment.NewLine}{exit.StandardError}");
+                return await unexpectedExitTask.ConfigureAwait(false);
             }
 
             await operationTask.ConfigureAwait(false);
+            return null;
         }
     }
 }

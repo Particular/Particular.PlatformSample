@@ -13,7 +13,7 @@ using OpenQA.Selenium.Chrome;
 [Parallelizable(ParallelScope.None)]
 public class VisualTests
 {
-    Task launcherTask;
+    Task<LaunchResult> launcherTask;
     CancellationTokenSource closePlatformTokenSource;
     ChromeDriver driver;
 
@@ -22,19 +22,38 @@ public class VisualTests
     {
         closePlatformTokenSource = new CancellationTokenSource();
 
-        launcherTask = Task.Run(async () =>
-        {
-            await PlatformLauncher.Launch(cancellationToken: closePlatformTokenSource.Token);
-        });
+        launcherTask = Task.Run(() => PlatformLauncher.LaunchWithResult(cancellationToken: closePlatformTokenSource.Token));
 
         using var timeoutTokenSource = new CancellationTokenSource(60_000);
 
-        while (TestPortsInternal.ServicePulse == 0)
+        while (TestPortsInternal.ServicePulse == 0 && !launcherTask.IsCompleted)
         {
-            await Task.Delay(1000, closePlatformTokenSource.Token);
+            await Task.Delay(1000, timeoutTokenSource.Token);
         }
 
-        await Network.WaitForHttpOk($"http://localhost:{TestPortsInternal.ServicePulse}", cancellationToken: timeoutTokenSource.Token);
+        var readinessTask = Network.WaitForHttpOk($"http://localhost:{TestPortsInternal.ServicePulse}", cancellationToken: timeoutTokenSource.Token);
+        try
+        {
+            if (await Task.WhenAny(readinessTask, launcherTask) == launcherTask)
+            {
+                var result = await launcherTask;
+                Assert.Fail($"The launcher stopped before ServicePulse was ready. Tool: {result.UnexpectedExit?.ProcessName}, exit code: {result.UnexpectedExit?.ExitCode}.");
+            }
+
+            await readinessTask;
+        }
+        finally
+        {
+            await timeoutTokenSource.CancelAsync();
+            try
+            {
+                await readinessTask;
+            }
+            catch (OperationCanceledException) when (timeoutTokenSource.Token.IsCancellationRequested)
+            {
+                // Observe the pending readiness request when the launcher stops first.
+            }
+        }
 
         var chromeOpts = new ChromeOptions();
         chromeOpts.AddArgument("--headless=new");
@@ -75,11 +94,17 @@ public class VisualTests
         try
         {
             await closePlatformTokenSource.CancelAsync();
-            await launcherTask;
+            var result = await launcherTask;
+            Assert.That(result.UnexpectedExit, Is.Null, "A platform tool exited unexpectedly during the visual tests.");
         }
         finally
         {
             closePlatformTokenSource.Dispose();
+            if (launcherTask?.IsCompleted == true)
+            {
+                launcherTask.Dispose();
+            }
+
             if (driver != null)
             {
                 await driver.DisposeAsync();
