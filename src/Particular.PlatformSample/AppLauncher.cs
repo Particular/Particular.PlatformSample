@@ -16,13 +16,6 @@
         readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
         readonly Stack<Func<ValueTask>> cleanupActions = new();
 
-        // ServiceControl is built to require one exact .NET runtime patch version. Since this is for running samples and not production code, we can let the ServiceControl tools run on
-        // the latest installed patch of the same major.minor version instead, so they still start when that exact version is not installed.
-        static readonly Dictionary<string, string> serviceControlEnvironmentVariables = new()
-        {
-            { "DOTNET_ROLL_FORWARD", "LatestPatch" }
-        };
-
         public async Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
             var licenseFilePath = Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "Persisters", "RavenDB", "RavenLicense.json");
@@ -108,7 +101,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"), serviceControlEnvironmentVariables);
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"));
         }
 
         public void ServiceControlAudit(int port, int maintenancePort, string logPath, string transportPath, Uri connectionString)
@@ -130,7 +123,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"), serviceControlEnvironmentVariables);
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"));
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -150,7 +143,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"), serviceControlEnvironmentVariables);
+            StartProcess(Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"));
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
@@ -178,6 +171,11 @@
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = false
             };
+            // ServiceControl is built to require one exact .NET runtime patch version. Since this is for running samples and not production code,
+            // let the platform tools run on the latest installed patch of the same major.minor version, so they still start when that exact version
+            // is not installed. These are options for the dotnet host, so they must come before the assembly path.
+            startInfo.ArgumentList.Add("--roll-forward");
+            startInfo.ArgumentList.Add("LatestPatch");
             // Adding the assembly path to the argument list to prevent the path from being separated in to different arguments
             //  by the ProcessStartInfo constructor by spaces.
             startInfo.ArgumentList.Add(assemblyPath);
@@ -186,7 +184,7 @@
             {
                 foreach (var item in environmentVariables)
                 {
-                    startInfo.Environment[item.Key] = item.Value;
+                    startInfo.EnvironmentVariables.Add(item.Key, item.Value);
                 }
             }
 
