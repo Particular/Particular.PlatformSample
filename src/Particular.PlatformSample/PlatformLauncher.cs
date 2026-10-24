@@ -97,8 +97,15 @@
             launcher.ServicePulse(pulsePort, controlPort, monitoringPort, servicePulseDefaultRoute);
 
             Console.Write("Waiting for ServiceControl to be available");
-            await Network.WaitForHttpOk($"http://localhost:{controlPort}/api", stopWaiting: () => launcher.FindExitedTools().Count > 0, cancellationToken: tokenSource.Token)
-                .ConfigureAwait(false);
+            try
+            {
+                await Network.WaitForHttpOk($"http://localhost:{controlPort}/api", stopWaiting: () => launcher.FindExitedTools().Count > 0, cancellationToken: tokenSource.Token)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (tokenSource.Token.IsCancellationRequested)
+            {
+                // Ctrl+C was pressed, or the caller cancelled, before ServiceControl was available
+            }
 
             // A platform tool exited on its own (not because of Ctrl+C), for example because the .NET runtime version it requires is not installed
             var failedTools = launcher.FindExitedTools();
