@@ -113,6 +113,9 @@
                 }
 
                 launcher.StopProcesses();
+
+                // Launch() is usually the last call in the sample's Main, so this makes the process report the failure
+                Environment.ExitCode = 1;
                 return;
             }
 
