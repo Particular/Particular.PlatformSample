@@ -108,8 +108,13 @@
                 {
                     // HasExited can be true before all the error output has been read; this waits for the rest
                     await failedTool.Process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
-                    Console.WriteLine($"{failedTool.Name} failed to start:");
-                    Console.WriteLine(failedTool.ErrorOutput.ToString());
+                    Console.WriteLine($"{failedTool.Name} failed to start (exit code {failedTool.Process.ExitCode}):");
+
+                    // Nothing is captured when the tool output is shown in the console, or when the tool exits without writing to stderr
+                    var errorOutput = failedTool.ErrorOutput.ToString();
+                    Console.WriteLine(errorOutput.Length > 0
+                        ? errorOutput
+                        : $"No error output was captured. Check the console output above or the logs in {Path.Combine(finder.Root, ".logs")}{Environment.NewLine}");
                 }
 
                 launcher.StopProcesses();
