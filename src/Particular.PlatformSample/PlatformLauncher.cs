@@ -131,6 +131,22 @@
                 return;
             }
 
+            // A platform tool exited on its own (not because of Ctrl+C), for example because the .NET runtime version it requires is not installed
+            var failedTools = launcher.FindExitedTools();
+            if (failedTools.Count > 0 && !tokenSource.IsCancellationRequested)
+            {
+                foreach (var failedTool in failedTools)
+                {
+                    // HasExited can be true before all the error output has been read; this waits for the rest
+                    await failedTool.Process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+                    Console.WriteLine($"{failedTool.Name} failed to start:");
+                    Console.WriteLine(failedTool.ErrorOutput.ToString());
+                }
+
+                launcher.StopProcesses();
+                return;
+            }
+
             if (!tokenSource.IsCancellationRequested)
             {
                 var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
