@@ -131,6 +131,8 @@
                 return;
             }
 
+            launcher.StopCapturingErrorOutput();
+
             if (!tokenSource.IsCancellationRequested)
             {
                 var serviceControlApiUrl = $"http://localhost:{controlPort}/api";
