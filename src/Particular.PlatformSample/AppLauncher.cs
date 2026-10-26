@@ -16,8 +16,12 @@
         readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
         readonly Stack<Func<ValueTask>> cleanupActions = new();
         readonly List<PlatformTool> platformTools = [];
+        volatile bool captureErrorOutput = true;
 
         public sealed record PlatformTool(string Name, Process Process, StringBuilder ErrorOutput);
+
+        // The error output is only needed to report a startup failure, so stop keeping it once startup succeeds
+        public void StopCapturingErrorOutput() => captureErrorOutput = false;
 
         public void StopProcesses()
         {
@@ -220,10 +224,11 @@
             // without this in certain occasions the start takes waaaaay longer!
             if (hideConsoleOutput)
             {
-                // Keep the hidden error output so it can be shown if the tool fails to start
+                // Keep the hidden error output so it can be shown if the tool fails to start.
+                // The stream is still read after capturing stops, otherwise the tool blocks once the pipe buffer is full.
                 process.ErrorDataReceived += (_, args) =>
                 {
-                    if (args.Data is not null)
+                    if (args.Data is not null && captureErrorOutput)
                     {
                         tool.ErrorOutput.AppendLine(args.Data);
                     }
