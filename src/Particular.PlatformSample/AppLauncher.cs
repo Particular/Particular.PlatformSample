@@ -171,6 +171,11 @@
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = false
             };
+            // ServiceControl is built to require one exact .NET runtime patch version. Since this is for running samples and not production code,
+            // let the platform tools run on the latest installed patch of the same major.minor version, so they still start when that exact version
+            // is not installed.
+            startInfo.ArgumentList.Add("--roll-forward");
+            startInfo.ArgumentList.Add("Minor");
             // Adding the assembly path to the argument list to prevent the path from being separated in to different arguments
             //  by the ProcessStartInfo constructor by spaces.
             startInfo.ArgumentList.Add(assemblyPath);
