@@ -53,12 +53,12 @@
             }
         }
 
-        public static async Task WaitForHttpOk(string url, int timeoutMilliseconds = 1000, CancellationToken cancellationToken = default)
+        public static async Task WaitForHttpOk(string url, int timeoutMilliseconds = 1000, Func<bool> stopWaiting = null, CancellationToken cancellationToken = default)
         {
             var status = HttpStatusCode.Ambiguous;
             var c = new HttpClient();
 
-            while (!cancellationToken.IsCancellationRequested && status != HttpStatusCode.OK)
+            while (!cancellationToken.IsCancellationRequested && status != HttpStatusCode.OK && stopWaiting?.Invoke() != true)
             {
                 try
                 {

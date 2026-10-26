@@ -15,6 +15,26 @@
         readonly string platformPath = Path.Combine(AppContext.BaseDirectory, "platform");
         readonly bool hideConsoleOutput = !showPlatformToolConsoleOutput;
         readonly Stack<Func<ValueTask>> cleanupActions = new();
+        readonly List<PlatformTool> platformTools = [];
+
+        public sealed record PlatformTool(string Name, Process Process, StringBuilder ErrorOutput);
+
+        public void StopProcesses()
+        {
+            foreach (var tool in platformTools)
+            {
+                try
+                {
+                    tool.Process.Kill(entireProcessTree: true);
+                }
+                catch (InvalidOperationException)
+                {
+                    // The process has already exited
+                }
+            }
+        }
+
+        public List<PlatformTool> FindExitedTools() => platformTools.FindAll(tool => tool.Process.HasExited);
 
         public async Task<Uri> RavenDB(string logsPath, string dataDirectory, CancellationToken cancellationToken = default)
         {
@@ -101,7 +121,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"));
+            StartProcess("ServiceControl", Path.Combine(platformPath, "servicecontrol", "servicecontrol-instance", "ServiceControl.dll"));
         }
 
         public void ServiceControlAudit(int port, int maintenancePort, string logPath, string transportPath, Uri connectionString)
@@ -123,7 +143,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"));
+            StartProcess("ServiceControl Audit", Path.Combine(platformPath, "servicecontrol", "servicecontrol-audit-instance", "ServiceControl.Audit.dll"));
         }
 
         public void Monitoring(int port, string logPath, string transportPath)
@@ -143,7 +163,7 @@
                 return ValueTask.CompletedTask;
             });
 
-            StartProcess(Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"));
+            StartProcess("ServiceControl Monitoring", Path.Combine(platformPath, "servicecontrol", "monitoring-instance", "ServiceControl.Monitoring.dll"));
         }
 
         public void ServicePulse(int port, int serviceControlPort, int monitoringPort, string defaultRoute)
@@ -160,10 +180,10 @@
                 environmentVariables.Add("DEFAULT_ROUTE", defaultRoute);
             }
 
-            StartProcess(Path.Combine(platformPath, "servicepulse", "ServicePulse.dll"), environmentVariables);
+            StartProcess("ServicePulse", Path.Combine(platformPath, "servicepulse", "ServicePulse.dll"), environmentVariables);
         }
 
-        void StartProcess(string assemblyPath, Dictionary<string, string> environmentVariables = null)
+        void StartProcess(string name, string assemblyPath, Dictionary<string, string> environmentVariables = null)
         {
             var workingDirectory = Path.GetDirectoryName(assemblyPath)!;
             var startInfo = new ProcessStartInfo("dotnet")
@@ -195,13 +215,25 @@
             }
 
             var process = Process.Start(startInfo);
+            var tool = new PlatformTool(name, process, new StringBuilder());
 
             // without this in certain occasions the start takes waaaaay longer!
             if (hideConsoleOutput)
             {
+                // Keep the hidden error output so it can be shown if the tool fails to start
+                process.ErrorDataReceived += (_, args) =>
+                {
+                    if (args.Data is not null)
+                    {
+                        tool.ErrorOutput.AppendLine(args.Data);
+                    }
+                };
+
                 process.BeginErrorReadLine();
                 process.BeginOutputReadLine();
             }
+
+            platformTools.Add(tool);
         }
 
         static string GetResource(string resourceName)
